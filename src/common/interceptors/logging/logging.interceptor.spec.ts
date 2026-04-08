@@ -1,19 +1,30 @@
 import type { CallHandler, ExecutionContext } from '@nestjs/common';
+import { EventEmitter } from 'node:events';
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { LoggingInterceptor } from './logging.interceptor';
 
 describe('LoggingInterceptor', () => {
   const createExecutionContext = (
     method: string,
-    url: string,
+    path: string,
     statusCode: number,
-  ): ExecutionContext => {
-    return {
+  ): {
+    context: ExecutionContext;
+    response: EventEmitter & { statusCode: number };
+  } => {
+    const response = new EventEmitter() as EventEmitter & {
+      statusCode: number;
+    };
+    response.statusCode = statusCode;
+
+    const context = {
       switchToHttp: () => ({
-        getRequest: () => ({ method, url }),
-        getResponse: () => ({ statusCode }),
+        getRequest: () => ({ method, path }),
+        getResponse: () => response,
       }),
     } as unknown as ExecutionContext;
+
+    return { context, response };
   };
 
   it('should be defined', () => {
@@ -35,14 +46,20 @@ describe('LoggingInterceptor', () => {
     const dateNowSpy = jest.spyOn(Date, 'now');
     dateNowSpy.mockReturnValueOnce(1000).mockReturnValueOnce(1025);
 
-    const context = createExecutionContext('GET', '/api/v1/health', 200);
+    const { context, response } = createExecutionContext(
+      'GET',
+      '/api/v1/health',
+      200,
+    );
     const next: CallHandler = {
       handle: () => of('ok'),
     };
 
-    await expect(
-      lastValueFrom(interceptor.intercept(context, next)),
-    ).resolves.toBe('ok');
+    const resultPromise = lastValueFrom(interceptor.intercept(context, next));
+
+    response.emit('finish');
+
+    await expect(resultPromise).resolves.toBe('ok');
 
     expect(logSpy).toHaveBeenCalledWith('GET /api/v1/health 200 25ms');
 
@@ -64,14 +81,20 @@ describe('LoggingInterceptor', () => {
     const dateNowSpy = jest.spyOn(Date, 'now');
     dateNowSpy.mockReturnValueOnce(2000).mockReturnValueOnce(2015);
 
-    const context = createExecutionContext('POST', '/api/v1/auth/login', 401);
+    const { context, response } = createExecutionContext(
+      'POST',
+      '/api/v1/auth/login',
+      401,
+    );
     const next: CallHandler = {
       handle: () => throwError(() => new Error('Unauthorized')),
     };
 
-    await expect(
-      lastValueFrom(interceptor.intercept(context, next)),
-    ).rejects.toThrow('Unauthorized');
+    const resultPromise = lastValueFrom(interceptor.intercept(context, next));
+
+    response.emit('finish');
+
+    await expect(resultPromise).rejects.toThrow('Unauthorized');
 
     expect(logSpy).toHaveBeenCalledWith('POST /api/v1/auth/login 401 15ms');
 
