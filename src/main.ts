@@ -32,6 +32,12 @@ async function bootstrap() {
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, swaggerDocument);
 
-  await app.listen(process.env.PORT ?? 3000);
+  const envPort = process.env.PORT;
+  const port = envPort !== undefined ? Number.parseInt(envPort, 10) : 3000;
+
+  await app.listen(Number.isNaN(port) ? 3000 : port);
 }
-void bootstrap();
+bootstrap().catch((error: unknown) => {
+  console.error('Failed to start application', error);
+  process.exit(1);
+});
