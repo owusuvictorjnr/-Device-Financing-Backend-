@@ -7,6 +7,14 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 
+interface ErrorResponseBody {
+  status: 'error';
+  message: string;
+  path: string;
+  timestamp: string;
+  errors?: string[];
+}
+
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
@@ -19,13 +27,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message =
+    const defaultMessage =
+      statusCode === 500 ? 'Internal server error' : 'Request failed';
+
+    const { message, errors } =
       exception instanceof HttpException
         ? (() => {
             const exceptionResponse = exception.getResponse();
 
             if (typeof exceptionResponse === 'string') {
-              return exceptionResponse;
+              return {
+                message: exceptionResponse,
+              };
             }
 
             if (
@@ -37,18 +50,36 @@ export class HttpExceptionFilter implements ExceptionFilter {
                 message?: string | string[];
               };
 
-              return responseWithMessage.message ?? exception.message;
+              const responseMessage = responseWithMessage.message;
+
+              if (Array.isArray(responseMessage)) {
+                return {
+                  message: responseMessage[0] ?? defaultMessage,
+                  errors: responseMessage,
+                };
+              }
+
+              return {
+                message: responseMessage ?? defaultMessage,
+              };
             }
 
-            return exception.message;
+            return {
+              message: exception.message || defaultMessage,
+            };
           })()
-        : 'Internal server error';
+        : {
+            message: defaultMessage,
+          };
 
-    response.status(statusCode).json({
+    const responseBody: ErrorResponseBody = {
       status: 'error',
       message,
       path: request.path,
       timestamp: new Date().toISOString(),
-    });
+      ...(errors ? { errors } : {}),
+    };
+
+    response.status(statusCode).json(responseBody);
   }
 }
