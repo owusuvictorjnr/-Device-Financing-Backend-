@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ConfigModule } from './config/config.module';
+import { AppConfigModule } from './config/config.module';
 import { DatabaseModule } from './database/database.module';
 import { RedisModule } from './redis/redis.module';
 import { HealthModule } from './health/health.module';
@@ -20,7 +20,25 @@ import { ReportsModule } from './reports/reports.module';
 import { DeviceSyncModule } from './device-sync/device-sync.module';
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, RedisModule, HealthModule, AuthModule, UsersModule, AgentsModule, CustomersModule, DevicesModule, LoansModule, PaymentsModule, CommandsModule, NotificationsModule, JobsModule, AuditModule, ReportsModule, DeviceSyncModule],
+  imports: [
+    AppConfigModule,
+    DatabaseModule,
+    RedisModule,
+    HealthModule,
+    AuthModule,
+    UsersModule,
+    AgentsModule,
+    CustomersModule,
+    DevicesModule,
+    LoansModule,
+    PaymentsModule,
+    CommandsModule,
+    NotificationsModule,
+    JobsModule,
+    AuditModule,
+    ReportsModule,
+    DeviceSyncModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
