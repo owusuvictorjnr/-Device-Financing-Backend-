@@ -1,13 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { HealthService } from './health.service';
-
-interface HealthResponse {
-  status: 'success';
-  data: {
-    database: 'up' | 'down';
-    redis: 'up' | 'down';
-  };
-}
+import type { HealthResponse } from './health.types';
 
 @Controller('health')
 export class HealthController {
