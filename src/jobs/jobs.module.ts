@@ -5,6 +5,11 @@ import { CommandRetryWorker } from './command-retry.worker/command-retry.worker'
 import { ReminderWorker } from './reminder.worker/reminder.worker';
 
 @Module({
-  providers: [JobsService, PaymentEnforcementWorker, CommandRetryWorker, ReminderWorker],
+  providers: [
+    JobsService,
+    PaymentEnforcementWorker,
+    CommandRetryWorker,
+    ReminderWorker,
+  ],
 })
 export class JobsModule {}
