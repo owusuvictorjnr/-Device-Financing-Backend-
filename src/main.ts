@@ -1,4 +1,4 @@
-import { RequestMethod, ValidationPipe } from '@nestjs/common';
+import { Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -44,7 +44,17 @@ async function bootstrap() {
 
   await app.listen(port);
 }
+const bootstrapLogger = new Logger('Bootstrap');
+
 bootstrap().catch((error: unknown) => {
-  console.error('Failed to start application', error);
+  const errorMessage =
+    error instanceof Error ? error.message : 'Unknown bootstrap error';
+  const errorStack = error instanceof Error ? error.stack : undefined;
+
+  bootstrapLogger.error(
+    'Failed to start application',
+    errorStack,
+    errorMessage,
+  );
   process.exit(1);
 });
