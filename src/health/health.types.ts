@@ -6,6 +6,6 @@ export interface HealthData {
 }
 
 export interface HealthResponse {
-  status: 'success';
+  status: 'success' | 'error';
   data: HealthData;
 }
