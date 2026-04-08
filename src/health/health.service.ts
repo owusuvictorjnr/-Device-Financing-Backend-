@@ -5,8 +5,10 @@ import { type HealthResponse } from './health.types';
 @Injectable()
 export class HealthService {
   async getHealth(): Promise<HealthResponse> {
-    const database = await this.checkDatabase();
-    const redis = await this.checkRedis();
+    const [database, redis] = await Promise.all([
+      this.checkDatabase(),
+      this.checkRedis(),
+    ] as const);
 
     return {
       status: 'success',
