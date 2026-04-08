@@ -56,8 +56,9 @@ describe('HttpExceptionFilter', () => {
     expect(json).toHaveBeenCalledWith(
       expect.objectContaining({
         status: 'error',
-        message: ['email must be an email', 'password should not be empty'],
+        message: 'email must be an email',
         path: '/api/v1/users',
+        errors: ['email must be an email', 'password should not be empty'],
       }),
     );
   });

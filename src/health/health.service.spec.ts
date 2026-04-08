@@ -1,50 +1,34 @@
+import { ConfigService } from '@nestjs/config';
 import { HealthService } from './health.service';
 import { Socket } from 'node:net';
 
 describe('HealthService', () => {
   let service: HealthService;
-  let originalDatabaseUrl: string | undefined;
-  let originalRedisUrl: string | undefined;
-  let originalRedisHost: string | undefined;
-  let originalRedisPort: string | undefined;
+  let mockConfigService: jest.Mocked<ConfigService>;
 
   beforeEach(() => {
-    service = new HealthService();
-    originalDatabaseUrl = process.env.DATABASE_URL;
-    originalRedisUrl = process.env.REDIS_URL;
-    originalRedisHost = process.env.REDIS_HOST;
-    originalRedisPort = process.env.REDIS_PORT;
+    mockConfigService = {
+      get: jest.fn((key: string, defaultValue?: string): string | undefined => {
+        const config: Record<string, string | undefined> = {
+          DATABASE_URL: 'postgresql://localhost:5432/test',
+          REDIS_URL: undefined,
+          REDIS_HOST: 'localhost',
+          REDIS_PORT: '6379',
+        };
+
+        const value = config[key];
+        return value !== undefined ? value : defaultValue;
+      }),
+    } as unknown as jest.Mocked<ConfigService>;
+
+    service = new HealthService(mockConfigService);
   });
 
   afterEach(() => {
-    if (originalDatabaseUrl === undefined) {
-      delete process.env.DATABASE_URL;
-    } else {
-      process.env.DATABASE_URL = originalDatabaseUrl;
-    }
-
-    if (originalRedisUrl === undefined) {
-      delete process.env.REDIS_URL;
-    } else {
-      process.env.REDIS_URL = originalRedisUrl;
-    }
-
-    if (originalRedisHost === undefined) {
-      delete process.env.REDIS_HOST;
-    } else {
-      process.env.REDIS_HOST = originalRedisHost;
-    }
-
-    if (originalRedisPort === undefined) {
-      delete process.env.REDIS_PORT;
-    } else {
-      process.env.REDIS_PORT = originalRedisPort;
-    }
-
     jest.restoreAllMocks();
   });
 
-  it('should return combined up/down status from checks', async () => {
+  it('should return error when any dependency is down', async () => {
     jest
       .spyOn(
         service as unknown as { checkDatabase: () => Promise<'up' | 'down'> },
@@ -59,7 +43,7 @@ describe('HealthService', () => {
       .mockResolvedValue('down');
 
     await expect(service.getHealth()).resolves.toEqual({
-      status: 'success',
+      status: 'error',
       data: {
         database: 'up',
         redis: 'down',
@@ -67,8 +51,43 @@ describe('HealthService', () => {
     });
   });
 
+  it('should return success when all dependencies are up', async () => {
+    jest
+      .spyOn(
+        service as unknown as { checkDatabase: () => Promise<'up' | 'down'> },
+        'checkDatabase',
+      )
+      .mockResolvedValue('up');
+    jest
+      .spyOn(
+        service as unknown as { checkRedis: () => Promise<'up' | 'down'> },
+        'checkRedis',
+      )
+      .mockResolvedValue('up');
+
+    await expect(service.getHealth()).resolves.toEqual({
+      status: 'success',
+      data: {
+        database: 'up',
+        redis: 'up',
+      },
+    });
+  });
+
   it('should report down for database when DATABASE_URL is missing', async () => {
-    delete process.env.DATABASE_URL;
+    mockConfigService.get.mockImplementation(
+      (key: string, defaultValue?: string): string | undefined => {
+        const config: Record<string, string | undefined> = {
+          DATABASE_URL: undefined,
+          REDIS_URL: undefined,
+          REDIS_HOST: 'localhost',
+          REDIS_PORT: '6379',
+        };
+
+        const value = config[key];
+        return value !== undefined ? value : defaultValue;
+      },
+    );
 
     await expect(
       (
@@ -80,7 +99,19 @@ describe('HealthService', () => {
   });
 
   it('should use REDIS_URL when provided', async () => {
-    process.env.REDIS_URL = 'redis://cache.example.com:6380';
+    mockConfigService.get.mockImplementation(
+      (key: string, defaultValue?: string): string | undefined => {
+        const config: Record<string, string | undefined> = {
+          DATABASE_URL: 'postgresql://localhost:5432/test',
+          REDIS_URL: 'redis://cache.example.com:6380',
+          REDIS_HOST: 'localhost',
+          REDIS_PORT: '6379',
+        };
+
+        const value = config[key];
+        return value !== undefined ? value : defaultValue;
+      },
+    );
 
     const checkTcpFromUrlSpy = jest
       .spyOn(
@@ -109,9 +140,19 @@ describe('HealthService', () => {
   });
 
   it('should fallback to REDIS_HOST and REDIS_PORT when REDIS_URL is missing', async () => {
-    delete process.env.REDIS_URL;
-    process.env.REDIS_HOST = 'redis.internal';
-    process.env.REDIS_PORT = '6381';
+    mockConfigService.get.mockImplementation(
+      (key: string, defaultValue?: string): string | undefined => {
+        const config: Record<string, string | undefined> = {
+          DATABASE_URL: 'postgresql://localhost:5432/test',
+          REDIS_URL: undefined,
+          REDIS_HOST: 'redis.internal',
+          REDIS_PORT: '6381',
+        };
+
+        const value = config[key];
+        return value !== undefined ? value : defaultValue;
+      },
+    );
 
     const checkTcpFromUrlSpy = jest
       .spyOn(
