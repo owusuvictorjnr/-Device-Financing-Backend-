@@ -4,6 +4,6 @@ import { DeviceSyncService } from './device-sync.service';
 
 @Module({
   controllers: [DeviceSyncController],
-  providers: [DeviceSyncService]
+  providers: [DeviceSyncService],
 })
 export class DeviceSyncModule {}
