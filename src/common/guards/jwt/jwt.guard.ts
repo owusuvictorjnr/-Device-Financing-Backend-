@@ -11,9 +11,7 @@ type AuthenticatedRequest = {
 
 @Injectable()
 export class JwtGuard implements CanActivate {
-  private readonly jwtService = new JwtService({
-    secret: process.env.JWT_SECRET,
-  });
+  constructor(private readonly jwtService: JwtService) {}
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
