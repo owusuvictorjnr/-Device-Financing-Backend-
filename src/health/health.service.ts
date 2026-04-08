@@ -1,21 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Socket } from 'node:net';
-
-interface HealthResponse {
-  status: 'success';
-  data: {
-    database: 'up' | 'down';
-    redis: 'up' | 'down';
-  };
-}
+import { type HealthResponse } from './health.types';
 
 @Injectable()
 export class HealthService {
   async getHealth(): Promise<HealthResponse> {
-    const [database, redis] = await Promise.all([
-      this.checkDatabase(),
-      this.checkRedis(),
-    ]);
+    const database = await this.checkDatabase();
+    const redis = await this.checkRedis();
 
     return {
       status: 'success',
