@@ -1,17 +1,21 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Socket } from 'node:net';
 import { type HealthResponse } from './health.types';
 
 @Injectable()
 export class HealthService {
+  constructor(private readonly configService: ConfigService) {}
   async getHealth(): Promise<HealthResponse> {
     const [database, redis] = await Promise.all([
       this.checkDatabase(),
       this.checkRedis(),
     ] as const);
 
+    const status = database === 'up' && redis === 'up' ? 'success' : 'error';
+
     return {
-      status: 'success',
+      status,
       data: {
         database,
         redis,
@@ -20,7 +24,8 @@ export class HealthService {
   }
 
   private async checkDatabase(): Promise<'up' | 'down'> {
-    return this.checkTcpFromUrl(process.env.DATABASE_URL, 5432);
+    const databaseUrl = this.configService.get<string>('DATABASE_URL');
+    return this.checkTcpFromUrl(databaseUrl, 5432);
   }
 
   private async checkRedis(): Promise<'up' | 'down'> {
@@ -28,14 +33,14 @@ export class HealthService {
   }
 
   private getRedisUrl(): string {
-    const redisUrl = process.env.REDIS_URL;
+    const redisUrl = this.configService.get<string>('REDIS_URL');
 
     if (redisUrl) {
       return redisUrl;
     }
 
-    const redisHost = process.env.REDIS_HOST ?? 'localhost';
-    const redisPort = process.env.REDIS_PORT ?? '6379';
+    const redisHost = this.configService.get<string>('REDIS_HOST', 'localhost');
+    const redisPort = this.configService.get<string>('REDIS_PORT', '6379');
 
     return `redis://${redisHost}:${redisPort}`;
   }
