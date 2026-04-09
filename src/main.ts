@@ -52,9 +52,8 @@ bootstrap().catch((error: unknown) => {
   const errorStack = error instanceof Error ? error.stack : undefined;
 
   bootstrapLogger.error(
-    'Failed to start application',
+    `Failed to start application: ${errorMessage}`,
     errorStack,
-    errorMessage,
   );
   process.exit(1);
 });
