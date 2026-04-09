@@ -97,7 +97,7 @@ describe('UsersController', () => {
 
       jest.spyOn(service, 'findAll').mockResolvedValue(users);
 
-      const result = await controller.findAll(0, 10);
+      const result = await controller.findAll({ skip: 0, take: 10 });
 
       expect(result).toEqual(users);
       expect(service.findAll).toHaveBeenCalledWith(0, 10);
@@ -224,6 +224,10 @@ describe('UsersController', () => {
           status: UserStatus.SUSPENDED,
         }),
       );
+
+      // Verify input DTO was not mutated
+      expect(dtoToPass.role).toBe(UserRole.ADMIN);
+      expect(dtoToPass.status).toBe(UserStatus.SUSPENDED);
     });
   });
 });
