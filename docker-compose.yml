@@ -1,3 +1,6 @@
+version: '3.9'
+
+services:
   api:
     build: .
     container_name: device-financing-api
@@ -46,6 +49,6 @@
     volumes:
       - redis_data:/data
 
-  volumes:
-    postgres_data:
-    redis_data:
+volumes:
+  postgres_data:
+  redis_data:
