@@ -84,12 +84,10 @@ export class UsersService {
     await this.findOne(id);
 
     const { password, ...userData } = updateUserDto;
-    const dataToUpdate: Partial<User> = userData as Partial<User>;
-
-    // Hash new password if provided
-    if (password) {
-      dataToUpdate.password_hash = await hash(password, 10);
-    }
+    const dataToUpdate = {
+      ...userData,
+      ...(password ? { password_hash: await hash(password, 10) } : {}),
+    };
 
     // Check if email is being changed and if it's already in use
     if (updateUserDto.email) {
