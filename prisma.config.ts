@@ -3,8 +3,9 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
-const isPrismaGenerateCommand = process.argv.some(
-  (arg) => arg === "generate" || arg.endsWith(":generate"),
+const prismaArgs = process.argv.slice(2);
+const isDatabaseDependentCommand = prismaArgs.some((arg) =>
+  ["migrate", "db", "studio"].includes(arg),
 );
 const databaseUrl = process.env["DATABASE_URL"]?.trim();
 const fallbackDatabaseUrl =
@@ -12,7 +13,7 @@ const fallbackDatabaseUrl =
 
 if (
   (!databaseUrl || databaseUrl === "\"\"" || databaseUrl === "''") &&
-  !isPrismaGenerateCommand
+  isDatabaseDependentCommand
 ) {
   throw new Error("DATABASE_URL must be set for Prisma commands.");
 }
