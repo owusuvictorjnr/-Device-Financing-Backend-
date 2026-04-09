@@ -3,6 +3,7 @@ import {
   Controller,
   DefaultValuePipe,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   ParseIntPipe,
@@ -17,6 +18,7 @@ import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto';
 import { JwtGuard } from '../common/guards/jwt/jwt.guard';
 import { RolesGuard } from '../common/guards/roles/roles.guard';
 import { Roles } from '../common/decorators/roles/roles.decorator';
+import { CurrentUser } from '../common/decorators/current-user/current-user.decorator';
 import { UserRole } from '@prisma/client';
 
 @ApiTags('users')
@@ -44,6 +46,7 @@ export class UsersController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })
+  @Roles(UserRole.ADMIN)
   async findOne(@Param('id') id: string): Promise<UserResponseDto> {
     return this.usersService.findOne(id);
   }
@@ -53,7 +56,20 @@ export class UsersController {
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @CurrentUser('id') currentUserId: string,
+    @CurrentUser('role') currentUserRole: UserRole,
   ): Promise<UserResponseDto> {
+    // Authorization: ADMIN can update anyone, non-ADMIN can only update themselves
+    if (currentUserRole !== UserRole.ADMIN && currentUserId !== id) {
+      throw new ForbiddenException('You can only update your own profile');
+    }
+
+    // Field-level restrictions: non-ADMIN users cannot change role or status
+    if (currentUserRole !== UserRole.ADMIN) {
+      delete updateUserDto.role;
+      delete updateUserDto.status;
+    }
+
     return this.usersService.update(id, updateUserDto);
   }
 
