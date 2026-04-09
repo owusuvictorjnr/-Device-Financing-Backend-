@@ -124,12 +124,14 @@ model Agent {
   commission_rate Float
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
+  deleted_at      DateTime?
 
   user      User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
   customers Customer[]
 
   @@index([user_id])
   @@index([region])
+  @@index([deleted_at])
 }
 
 model Customer {
@@ -258,14 +260,15 @@ model Command {
 }
 
 model AuditLog {
-  id        String   @id @default(uuid())
-  user_id   String?
-  action    String
-  entity    String
-  entity_id String
-  changes   Json?
+  id         String   @id @default(uuid())
+  user_id    String?
+  action     String
+  entity     String
+  entity_id  String
+  changes    Json?
   ip_address String?
   created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
 
