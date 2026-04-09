@@ -7,6 +7,7 @@ import { hash } from 'bcrypt';
 import type { User } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto';
+import { mapUserToResponseDto } from './mappers/user-response.mapper';
 
 @Injectable()
 export class UsersService {
@@ -45,7 +46,7 @@ export class UsersService {
         },
       });
 
-      return this.toResponseDto(user);
+      return mapUserToResponseDto(user);
     } catch (error: unknown) {
       this.handleUniqueConstraintError(error);
       throw error;
@@ -60,7 +61,7 @@ export class UsersService {
       orderBy: { created_at: 'desc' },
     });
 
-    return users.map((user) => this.toResponseDto(user));
+    return users.map((user) => mapUserToResponseDto(user));
   }
 
   async findOne(id: string): Promise<UserResponseDto> {
@@ -72,7 +73,7 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    return this.toResponseDto(user);
+    return mapUserToResponseDto(user);
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -125,7 +126,7 @@ export class UsersService {
         data: dataToUpdate,
       });
 
-      return this.toResponseDto(user);
+      return mapUserToResponseDto(user);
     } catch (error: unknown) {
       this.handleUniqueConstraintError(error);
       this.handleRecordNotFoundError(error, id);
@@ -143,20 +144,6 @@ export class UsersService {
     });
 
     return { message: `User ${id} has been deleted` };
-  }
-
-  private toResponseDto(user: User): UserResponseDto {
-    return {
-      id: user.id,
-      name: user.name,
-      phone: user.phone,
-      email: user.email,
-      role: user.role,
-      status: user.status,
-      createdAt: user.created_at,
-      updatedAt: user.updated_at,
-      deletedAt: user.deleted_at,
-    };
   }
 
   private handleUniqueConstraintError(error: unknown): void {
