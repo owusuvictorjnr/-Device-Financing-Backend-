@@ -3,6 +3,12 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+const databaseUrl = process.env["DATABASE_URL"]?.trim();
+
+if (!databaseUrl || databaseUrl === "\"\"" || databaseUrl === "''") {
+  throw new Error("DATABASE_URL must be set for Prisma commands.");
+}
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
@@ -10,8 +16,6 @@ export default defineConfig({
     seed: "ts-node prisma/seed.ts",
   },
   datasource: {
-    url:
-      process.env["DATABASE_URL"] ??
-      "postgresql://postgres:postgres@localhost:5432/device_financing?schema=public",
+    url: databaseUrl,
   },
 });
