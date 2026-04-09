@@ -3,7 +3,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { PrismaService } from '../database/prisma.service';
 import { UserRole, UserStatus } from '@prisma/client';
-/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unnecessary-type-assertion */
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -24,13 +24,13 @@ describe('UsersService', () => {
         UsersService,
         {
           provide: PrismaService,
-          useValue: mockPrismaService,
+          useValue: mockPrismaService as unknown as PrismaService,
         },
       ],
     }).compile();
 
     service = module.get<UsersService>(UsersService);
-    prisma = module.get(PrismaService);
+    prisma = module.get(PrismaService) as unknown as jest.Mocked<PrismaService>;
   });
 
   it('should be defined', () => {
@@ -144,6 +144,212 @@ describe('UsersService', () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
       await expect(service.findOne('nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('findAll', () => {
+    it('should return paginated list of active users', async () => {
+      const users = [
+        {
+          id: '1',
+          name: 'John Doe',
+          phone: '1234567890',
+          email: 'john@example.com',
+          password_hash: 'hash',
+          role: UserRole.CUSTOMER,
+          status: UserStatus.ACTIVE,
+          created_at: new Date('2026-04-01'),
+          updated_at: new Date('2026-04-01'),
+          deleted_at: null,
+        },
+      ];
+
+      prisma.user.findMany.mockResolvedValue(users);
+
+      const result = await service.findAll(0, 10);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('1');
+      expect(prisma.user.findMany).toHaveBeenCalledWith({
+        where: { deleted_at: null },
+        skip: 0,
+        take: 10,
+        orderBy: { created_at: 'desc' },
+      });
+    });
+
+    it('should exclude soft-deleted users from results', async () => {
+      prisma.user.findMany.mockResolvedValue([]);
+
+      await service.findAll(0, 10);
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { deleted_at: null },
+        }),
+      );
+    });
+
+    it('should apply pagination correctly', async () => {
+      prisma.user.findMany.mockResolvedValue([]);
+
+      await service.findAll(20, 5);
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 20,
+          take: 5,
+        }),
+      );
+    });
+  });
+
+  describe('update', () => {
+    it('should update user without password', async () => {
+      const updateUserDto = {
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+      };
+
+      const existingUser = {
+        id: '1',
+        name: 'John Doe',
+        phone: '1234567890',
+        email: 'john@example.com',
+        password_hash: 'hash',
+        role: UserRole.CUSTOMER,
+        status: UserStatus.ACTIVE,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+      };
+
+      const updatedUser = {
+        ...existingUser,
+        ...updateUserDto,
+      };
+
+      prisma.user.findUnique.mockResolvedValue(existingUser);
+      prisma.user.update.mockResolvedValue(updatedUser);
+
+      const result = await service.update('1', updateUserDto);
+
+      expect(result.name).toBe('Jane Doe');
+      expect(result.email).toBe('jane@example.com');
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: expect.objectContaining(updateUserDto),
+      });
+    });
+
+    it('should hash password when provided in update', async () => {
+      const updateUserDto = {
+        password: 'newpassword123',
+      };
+
+      const existingUser = {
+        id: '1',
+        name: 'John Doe',
+        phone: '1234567890',
+        email: 'john@example.com',
+        password_hash: 'oldhash',
+        role: UserRole.CUSTOMER,
+        status: UserStatus.ACTIVE,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+      };
+
+      const updatedUser = {
+        ...existingUser,
+        password_hash: 'newhash',
+      };
+
+      prisma.user.findUnique.mockResolvedValue(existingUser);
+      prisma.user.update.mockResolvedValue(updatedUser);
+
+      await service.update('1', updateUserDto);
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: expect.objectContaining({
+          password_hash: expect.any(String),
+        }),
+      });
+    });
+
+    it('should throw BadRequestException if email is already in use', async () => {
+      const updateUserDto = {
+        email: 'taken@example.com',
+      };
+
+      const existingUser = {
+        id: '1',
+        name: 'John Doe',
+        phone: '1234567890',
+        email: 'john@example.com',
+        password_hash: 'hash',
+        role: UserRole.CUSTOMER,
+        status: UserStatus.ACTIVE,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+      };
+
+      const otherUserWithEmail = {
+        ...existingUser,
+        id: '2',
+        email: 'taken@example.com',
+      };
+
+      prisma.user.findUnique
+        .mockResolvedValueOnce(existingUser)
+        .mockResolvedValueOnce(otherUserWithEmail);
+
+      await expect(service.update('1', updateUserDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('delete', () => {
+    it('should soft delete user by setting deleted_at', async () => {
+      const user = {
+        id: '1',
+        name: 'John Doe',
+        phone: '1234567890',
+        email: 'john@example.com',
+        password_hash: 'hash',
+        role: UserRole.CUSTOMER,
+        status: UserStatus.ACTIVE,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+      };
+
+      const deletedUser = {
+        ...user,
+        deleted_at: new Date(),
+      };
+
+      prisma.user.findUnique.mockResolvedValue(user);
+      prisma.user.update.mockResolvedValue(deletedUser);
+
+      const result = await service.delete('1');
+
+      expect(result.message).toContain('deleted');
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: { deleted_at: expect.any(Date) },
+      });
+    });
+
+    it('should throw NotFoundException if user does not exist', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(service.delete('nonexistent')).rejects.toThrow(
         NotFoundException,
       );
     });

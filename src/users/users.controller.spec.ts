@@ -1,13 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import type { CanActivate } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { PrismaService } from '../database/prisma.service';
+import { JwtGuard } from '../common/guards/jwt/jwt.guard';
+import { RolesGuard } from '../common/guards/roles/roles.guard';
 import { UserRole, UserStatus } from '@prisma/client';
 /* eslint-disable @typescript-eslint/unbound-method */
 
 describe('UsersController', () => {
   let controller: UsersController;
   let service: UsersService;
+
+  const mockGuard: CanActivate = {
+    canActivate: jest.fn(() => true),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -26,7 +33,12 @@ describe('UsersController', () => {
           },
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(JwtGuard)
+      .useValue(mockGuard)
+      .overrideGuard(RolesGuard)
+      .useValue(mockGuard)
+      .compile();
 
     controller = module.get<UsersController>(UsersController);
     service = module.get<UsersService>(UsersService);
