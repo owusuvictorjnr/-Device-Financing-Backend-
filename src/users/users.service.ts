@@ -36,15 +36,20 @@ export class UsersService {
     // Hash password
     const password_hash = await hash(password, 10);
 
-    // Create user
-    const user = await this.prisma.user.create({
-      data: {
-        ...userData,
-        password_hash,
-      },
-    });
+    try {
+      // Create user
+      const user = await this.prisma.user.create({
+        data: {
+          ...userData,
+          password_hash,
+        },
+      });
 
-    return this.toResponseDto(user);
+      return this.toResponseDto(user);
+    } catch (error: unknown) {
+      this.handleUniqueConstraintError(error);
+      throw error;
+    }
   }
 
   async findAll(skip = 0, take = 10): Promise<UserResponseDto[]> {
@@ -111,12 +116,18 @@ export class UsersService {
       }
     }
 
-    const user = await this.prisma.user.update({
-      where: { id },
-      data: dataToUpdate,
-    });
+    try {
+      const user = await this.prisma.user.update({
+        where: { id },
+        data: dataToUpdate,
+      });
 
-    return this.toResponseDto(user);
+      return this.toResponseDto(user);
+    } catch (error: unknown) {
+      this.handleUniqueConstraintError(error);
+      this.handleRecordNotFoundError(error, id);
+      throw error;
+    }
   }
 
   async delete(id: string): Promise<{ message: string }> {
@@ -135,5 +146,70 @@ export class UsersService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password_hash, ...rest } = user;
     return rest as UserResponseDto;
+  }
+
+  private handleUniqueConstraintError(error: unknown): void {
+    if (!this.isPrismaUniqueConstraintError(error)) {
+      return;
+    }
+
+    const target = this.getUniqueConstraintTarget(error);
+
+    if (target.includes('email')) {
+      throw new BadRequestException('Email already in use');
+    }
+
+    if (target.includes('phone')) {
+      throw new BadRequestException('Phone number already in use');
+    }
+
+    throw new BadRequestException('User with provided details already exists');
+  }
+
+  private isPrismaUniqueConstraintError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') {
+      return false;
+    }
+
+    return (error as { code?: unknown }).code === 'P2002';
+  }
+
+  private handleRecordNotFoundError(error: unknown, id: string): void {
+    if (!this.isPrismaRecordNotFoundError(error)) {
+      return;
+    }
+
+    throw new NotFoundException(`User with ID ${id} not found`);
+  }
+
+  private isPrismaRecordNotFoundError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') {
+      return false;
+    }
+
+    return (error as { code?: unknown }).code === 'P2025';
+  }
+
+  private getUniqueConstraintTarget(error: unknown): string[] {
+    if (!error || typeof error !== 'object') {
+      return [];
+    }
+
+    const meta = (error as { meta?: unknown }).meta;
+    if (!meta || typeof meta !== 'object') {
+      return [];
+    }
+
+    const target = (meta as { target?: unknown }).target;
+
+    if (typeof target === 'string') {
+      return [target];
+    }
+
+    if (Array.isArray(target)) {
+      return target.filter((item): item is string => typeof item === 'string');
+    }
+
+    return [];
   }
 }
