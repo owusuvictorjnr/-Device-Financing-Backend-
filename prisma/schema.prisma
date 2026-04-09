@@ -4,10 +4,276 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum UserRole {
+  ADMIN
+  AGENT
+  CUSTOMER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum DeviceType {
+  ANDROID_PHONE
+  IOT_RELAY
+  TV
+  FRIDGE
+  SOLAR_SYSTEM
+}
+
+enum DevicePlatform {
+  ANDROID
+  IOS
+  IOT
+}
+
+enum DeviceStatus {
+  ACTIVE
+  INACTIVE
+  LOCKED
+}
+
+enum LoanStatus {
+  ACTIVE
+  PAID
+  OVERDUE
+  DEFAULTED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  MOBILE_MONEY
+  CHECK
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+}
+
+enum PaymentRecordedBy {
+  AGENT
+  CUSTOMER
+  SYSTEM
+}
+
+enum CommandType {
+  LOCK
+  UNLOCK
+  SYNC
+  TURN_OFF_POWER
+  TURN_ON_POWER
+}
+
+enum CommandStatus {
+  PENDING
+  SENT
+  ACKNOWLEDGED
+  FAILED
+}
+
+// ============================================================================
+// MODELS
+// ============================================================================
+
+model User {
+  id            String       @id @default(uuid())
+  name          String
+  phone         String       @unique
+  email         String       @unique
+  password_hash String
+  role          UserRole
+  status        UserStatus   @default(ACTIVE)
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+  deleted_at    DateTime?
+
+  agent     Agent?
+  customer  Customer?
+  loans     Loan[]           @relation("AgentLoans")
+  payments  Payment[]        @relation("RecordedByUser")
+  commands  Command[]        @relation("IssuedByUser")
+  auditLogs AuditLog[]
+
+  @@index([role])
+  @@index([status])
+  @@index([deleted_at])
+}
+
+model Agent {
+  id              String   @id @default(uuid())
+  user_id         String   @unique
+  region          String
+  commission_rate Float
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  deleted_at      DateTime?
+
+  user      User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  customers Customer[]
+
+  @@index([user_id])
+  @@index([region])
+  @@index([deleted_at])
+}
+
+model Customer {
+  id           String   @id @default(uuid())
+  user_id      String   @unique
+  agent_id     String
+  national_id  String   @unique
+  address      String
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  deleted_at   DateTime?
+
+  user    User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  agent   Agent    @relation(fields: [agent_id], references: [id])
+  devices Device[]
+  loans   Loan[]
+
+  @@index([user_id])
+  @@index([agent_id])
+  @@index([deleted_at])
+}
+
+model Device {
+  id              String         @id @default(uuid())
+  serial_number   String         @unique
+  device_type     DeviceType
+  platform        DevicePlatform
+  model           String
+  status          DeviceStatus   @default(ACTIVE)
+  customer_id     String?
+  last_seen       DateTime?
+  created_at      DateTime       @default(now())
+  updated_at      DateTime       @updatedAt
+  deleted_at      DateTime?
+
+  customer Customer?  @relation(fields: [customer_id], references: [id])
+  loans    Loan[]
+  commands Command[]
+
+  @@index([serial_number])
+  @@index([customer_id])
+  @@index([status])
+  @@index([device_type])
+  @@index([deleted_at])
+}
+
+model Loan {
+  id                 String     @id @default(uuid())
+  customer_id        String
+  device_id          String
+  agent_id           String
+  principal_amount   Decimal
+  installment_amount Decimal
+  duration_days      Int
+  start_date         DateTime
+  due_date           DateTime
+  grace_period_days  Int        @default(0)
+  status             LoanStatus @default(ACTIVE)
+  created_at         DateTime   @default(now())
+  updated_at         DateTime   @updatedAt
+  deleted_at         DateTime?
+
+  customer Customer  @relation(fields: [customer_id], references: [id])
+  device   Device    @relation(fields: [device_id], references: [id])
+  agent    User      @relation(fields: [agent_id], references: [id], name: "AgentLoans")
+  payments Payment[]
+  commands Command[]
+
+  @@index([customer_id])
+  @@index([device_id])
+  @@index([agent_id])
+  @@index([status])
+  @@index([due_date])
+  @@index([deleted_at])
+}
+
+model Payment {
+  id             String            @id @default(uuid())
+  loan_id        String
+  amount         Decimal
+  payment_method PaymentMethod
+  reference      String            @unique
+  status         PaymentStatus     @default(PENDING)
+  paid_at        DateTime?
+  recorded_by    PaymentRecordedBy
+  recorded_by_id String?
+  created_at     DateTime          @default(now())
+  updated_at     DateTime          @updatedAt
+  deleted_at     DateTime?
+
+  loan        Loan   @relation(fields: [loan_id], references: [id])
+  recordedBy  User?  @relation(fields: [recorded_by_id], references: [id], name: "RecordedByUser")
+
+  @@index([loan_id])
+  @@index([reference])
+  @@index([status])
+  @@index([paid_at])
+  @@index([recorded_by_id])
+  @@index([deleted_at])
+}
+
+model Command {
+  id              String        @id @default(uuid())
+  device_id       String
+  loan_id         String
+  command_type    CommandType
+  status          CommandStatus @default(PENDING)
+  sent_at         DateTime?
+  acknowledged_at DateTime?
+  retry_count     Int           @default(0)
+  issued_by_id    String?
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+  deleted_at      DateTime?
+
+  device   Device  @relation(fields: [device_id], references: [id])
+  loan     Loan    @relation(fields: [loan_id], references: [id])
+  issuedBy User?   @relation(fields: [issued_by_id], references: [id], name: "IssuedByUser")
+
+  @@index([device_id])
+  @@index([loan_id])
+  @@index([status])
+  @@index([command_type])
+  @@index([issued_by_id])
+  @@index([deleted_at])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  user_id    String?
+  action     String
+  entity     String
+  entity_id  String
+  changes    Json?
+  ip_address String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([entity])
+  @@index([entity_id])
+  @@index([created_at])
 }

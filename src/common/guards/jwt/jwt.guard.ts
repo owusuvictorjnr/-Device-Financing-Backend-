@@ -28,10 +28,33 @@ export class JwtGuard implements CanActivate {
     }
 
     try {
-      request.user = this.jwtService.verify(token);
+      const payload: unknown = this.jwtService.verify(token) as unknown;
+      request.user = this.normalizePayload(payload);
       return true;
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
+  }
+
+  private normalizePayload(payload: unknown): unknown {
+    if (!payload || typeof payload !== 'object') {
+      return payload;
+    }
+
+    const parsedPayload = payload as Record<string, unknown>;
+    const sub = parsedPayload.sub;
+
+    if (typeof parsedPayload.id === 'string') {
+      return parsedPayload;
+    }
+
+    if (typeof sub !== 'string') {
+      return parsedPayload;
+    }
+
+    return {
+      ...parsedPayload,
+      id: sub,
+    };
   }
 }

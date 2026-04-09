@@ -76,7 +76,10 @@ describe('JwtGuard', () => {
     const result = guard.canActivate(createExecutionContext(request));
 
     expect(result).toBe(true);
-    expect(request.user).toEqual(payload);
+    expect(request.user).toEqual({
+      ...payload,
+      id: payload.sub,
+    });
     expect(jwtService.verify).toHaveBeenCalledWith('valid-token');
   });
 });
