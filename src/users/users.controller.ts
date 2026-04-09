@@ -1,38 +1,45 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto';
+import { JwtGuard } from '../common/guards/jwt/jwt.guard';
+import { RolesGuard } from '../common/guards/roles/roles.guard';
+import { Roles } from '../common/decorators/roles/roles.decorator';
+import { UserRole } from '@prisma/client';
 
 @ApiTags('users')
 @Controller('users')
+@UseGuards(JwtGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new user' })
+  @Roles(UserRole.ADMIN)
   async create(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto> {
     return this.usersService.create(createUserDto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all users' })
+  @Roles(UserRole.ADMIN)
   async findAll(
-    @Query('skip') skip?: string,
-    @Query('take') take?: string,
+    @Query('skip', new DefaultValuePipe(0), ParseIntPipe) skip: number,
+    @Query('take', new DefaultValuePipe(10), ParseIntPipe) take: number,
   ): Promise<UserResponseDto[]> {
-    return this.usersService.findAll(
-      skip ? parseInt(skip, 10) : 0,
-      take ? parseInt(take, 10) : 10,
-    );
+    return this.usersService.findAll(skip, take);
   }
 
   @Get(':id')
@@ -52,6 +59,7 @@ export class UsersController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete user (soft delete)' })
+  @Roles(UserRole.ADMIN)
   async delete(@Param('id') id: string): Promise<{ message: string }> {
     return this.usersService.delete(id);
   }
