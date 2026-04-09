@@ -34,14 +34,14 @@ export class UsersService {
     }
 
     // Hash password
-    const password_hash = await hash(password, 10);
+    const passwordHash = await hash(password, 10);
 
     try {
       // Create user
       const user = await this.prisma.user.create({
         data: {
           ...userData,
-          password_hash,
+          password_hash: passwordHash,
         },
       });
 
@@ -153,9 +153,9 @@ export class UsersService {
       email: user.email,
       role: user.role,
       status: user.status,
-      created_at: user.created_at,
-      updated_at: user.updated_at,
-      deleted_at: user.deleted_at,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at,
+      deletedAt: user.deleted_at,
     };
   }
 
