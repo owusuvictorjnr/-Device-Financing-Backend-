@@ -6,6 +6,8 @@ import { UserRole, UserStatus } from '@prisma/client';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 
+const TEST_BCRYPT_ROUNDS = 4;
+
 describe('AuthService', () => {
   let service: AuthService;
   let usersService: {
@@ -89,7 +91,7 @@ describe('AuthService', () => {
         password: 'password123',
       };
 
-      const passwordHash = await hash(loginDto.password, 10);
+      const passwordHash = await hash(loginDto.password, TEST_BCRYPT_ROUNDS);
       const user = {
         id: '1',
         name: 'John Doe',
@@ -146,7 +148,7 @@ describe('AuthService', () => {
         name: 'John Doe',
         phone: '1234567890',
         email: 'john@example.com',
-        password_hash: await hash('different-password', 10),
+        password_hash: await hash('different-password', TEST_BCRYPT_ROUNDS),
         role: UserRole.CUSTOMER,
         status: UserStatus.ACTIVE,
         created_at: new Date(),
@@ -162,6 +164,58 @@ describe('AuthService', () => {
           password: 'password123',
         }),
       ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw UnauthorizedException when user is inactive', async () => {
+      const user = {
+        id: '1',
+        name: 'John Doe',
+        phone: '1234567890',
+        email: 'john@example.com',
+        password_hash: await hash('password123', TEST_BCRYPT_ROUNDS),
+        role: UserRole.CUSTOMER,
+        status: UserStatus.INACTIVE,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+      };
+
+      usersService.findByEmail.mockResolvedValue(user);
+
+      await expect(
+        service.login({
+          email: 'john@example.com',
+          password: 'password123',
+        }),
+      ).rejects.toThrow(UnauthorizedException);
+
+      expect(jwtService.signAsync).not.toHaveBeenCalled();
+    });
+
+    it('should throw UnauthorizedException when user is suspended', async () => {
+      const user = {
+        id: '1',
+        name: 'John Doe',
+        phone: '1234567890',
+        email: 'john@example.com',
+        password_hash: await hash('password123', TEST_BCRYPT_ROUNDS),
+        role: UserRole.CUSTOMER,
+        status: UserStatus.SUSPENDED,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+      };
+
+      usersService.findByEmail.mockResolvedValue(user);
+
+      await expect(
+        service.login({
+          email: 'john@example.com',
+          password: 'password123',
+        }),
+      ).rejects.toThrow(UnauthorizedException);
+
+      expect(jwtService.signAsync).not.toHaveBeenCalled();
     });
   });
 });
