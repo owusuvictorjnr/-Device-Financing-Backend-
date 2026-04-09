@@ -177,20 +177,20 @@ model Device {
 }
 
 model Loan {
-  id                String     @id @default(uuid())
-  customer_id       String
-  device_id         String
-  agent_id          String
-  principal_amount  Float
-  installment_amount Float
-  duration_days     Int
-  start_date        DateTime
-  due_date          DateTime
-  grace_period_days Int        @default(0)
-  status            LoanStatus @default(ACTIVE)
-  created_at        DateTime   @default(now())
-  updated_at        DateTime   @updatedAt
-  deleted_at        DateTime?
+  id                 String     @id @default(uuid())
+  customer_id        String
+  device_id          String
+  agent_id           String
+  principal_amount   Decimal
+  installment_amount Decimal
+  duration_days      Int
+  start_date         DateTime
+  due_date           DateTime
+  grace_period_days  Int        @default(0)
+  status             LoanStatus @default(ACTIVE)
+  created_at         DateTime   @default(now())
+  updated_at         DateTime   @updatedAt
+  deleted_at         DateTime?
 
   customer Customer  @relation(fields: [customer_id], references: [id])
   device   Device    @relation(fields: [device_id], references: [id])
@@ -209,7 +209,7 @@ model Loan {
 model Payment {
   id             String            @id @default(uuid())
   loan_id        String
-  amount         Float
+  amount         Decimal
   payment_method PaymentMethod
   reference      String            @unique
   status         PaymentStatus     @default(PENDING)
