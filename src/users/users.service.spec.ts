@@ -503,8 +503,6 @@ describe('UsersService', () => {
 
   describe('delete', () => {
     it('should soft delete user by setting deleted_at', async () => {
-      const deletedAt = new Date();
-
       const user = {
         id: '1',
         name: 'John Doe',
@@ -520,18 +518,23 @@ describe('UsersService', () => {
 
       const deletedUser: User = {
         ...user,
-        deleted_at: deletedAt,
+        deleted_at: new Date(),
       };
 
       prisma.user.findUnique.mockResolvedValue(user);
       prisma.user.update.mockResolvedValue(deletedUser);
 
       const result = await service.delete('1');
+      const updateCall = prisma.user.update.mock.calls[0][0];
 
       expect(result.message).toContain('deleted');
+      expect(updateCall).toMatchObject({
+        where: { id: '1' },
+      });
+      expect(updateCall.data.deleted_at).toBeInstanceOf(Date);
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: '1' },
-        data: { deleted_at: deletedAt },
+        data: { deleted_at: updateCall.data.deleted_at },
       });
     });
 
