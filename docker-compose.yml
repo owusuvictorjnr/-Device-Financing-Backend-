@@ -4,7 +4,7 @@ services:
     container_name: device-financing-api
     restart: always
     ports:
-      - "3001:3000"
+      - "${API_HOST_PORT:-3001}:3000"
     env_file:
       - .env
     depends_on:
