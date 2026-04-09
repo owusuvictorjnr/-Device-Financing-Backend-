@@ -8,7 +8,7 @@ export class UserResponseDto {
 
   role: UserRole;
   status: UserStatus;
-  created_at: Date;
-  updated_at: Date;
-  deleted_at: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
 }
