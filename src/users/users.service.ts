@@ -76,8 +76,11 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return await this.prisma.user.findUnique({
-      where: { email },
+    return await this.prisma.user.findFirst({
+      where: {
+        email,
+        deleted_at: null,
+      },
     });
   }
 
@@ -143,9 +146,17 @@ export class UsersService {
   }
 
   private toResponseDto(user: User): UserResponseDto {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password_hash, ...rest } = user;
-    return rest as UserResponseDto;
+    return {
+      id: user.id,
+      name: user.name,
+      phone: user.phone,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      created_at: user.created_at,
+      updated_at: user.updated_at,
+      deleted_at: user.deleted_at,
+    };
   }
 
   private handleUniqueConstraintError(error: unknown): void {
