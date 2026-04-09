@@ -22,6 +22,7 @@ import { ReportsModule } from './reports/reports.module';
 import { DeviceSyncModule } from './device-sync/device-sync.module';
 
 const DEFAULT_RATE_LIMIT = 100;
+// @nestjs/throttler expects ttl in milliseconds.
 const DEFAULT_RATE_TTL_MS = 60_000;
 
 function parsePositiveInteger(
@@ -40,6 +41,7 @@ function parsePositiveInteger(
     AppConfigModule,
     ThrottlerModule.forRoot([
       {
+        // ttl unit is milliseconds.
         ttl: parsePositiveInteger(
           process.env.RATE_LIMIT_TTL_MS,
           DEFAULT_RATE_TTL_MS,
