@@ -1,4 +1,5 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { HealthService } from './health.service';
 import type { HealthResponse } from './health.types';
 
@@ -7,6 +8,7 @@ export class HealthController {
   constructor(private readonly healthService: HealthService) {}
 
   @Get()
+  @SkipThrottle()
   async getHealth(): Promise<HealthResponse> {
     const health = await this.healthService.getHealth();
 
