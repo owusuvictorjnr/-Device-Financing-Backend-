@@ -1,12 +1,10 @@
 import {
   Body,
   Controller,
-  DefaultValuePipe,
   Delete,
   ForbiddenException,
   Get,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -15,6 +13,7 @@ import {
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto';
+import { FindAllUsersQueryDto } from './dto/find-all-users-query.dto';
 import { JwtGuard } from '../common/guards/jwt/jwt.guard';
 import { RolesGuard } from '../common/guards/roles/roles.guard';
 import { Roles } from '../common/decorators/roles/roles.decorator';
@@ -38,9 +37,11 @@ export class UsersController {
   @ApiOperation({ summary: 'Get all users' })
   @Roles(UserRole.ADMIN)
   async findAll(
-    @Query('skip', new DefaultValuePipe(0), ParseIntPipe) skip: number,
-    @Query('take', new DefaultValuePipe(10), ParseIntPipe) take: number,
+    @Query() query: FindAllUsersQueryDto,
   ): Promise<UserResponseDto[]> {
+    const skip: number = query.skip;
+    const take: number = query.take;
+
     return this.usersService.findAll(skip, take);
   }
 
@@ -64,13 +65,14 @@ export class UsersController {
       throw new ForbiddenException('You can only update your own profile');
     }
 
-    // Field-level restrictions: non-ADMIN users cannot change role or status
+    const sanitizedUpdateUserDto: UpdateUserDto = { ...updateUserDto };
+
     if (currentUserRole !== UserRole.ADMIN) {
-      delete updateUserDto.role;
-      delete updateUserDto.status;
+      delete sanitizedUpdateUserDto.role;
+      delete sanitizedUpdateUserDto.status;
     }
 
-    return this.usersService.update(id, updateUserDto);
+    return this.usersService.update(id, sanitizedUpdateUserDto);
   }
 
   @Delete(':id')
