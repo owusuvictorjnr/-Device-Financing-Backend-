@@ -14,6 +14,7 @@ describe('UsersService', () => {
       user: {
         create: jest.fn(),
         findMany: jest.fn(),
+        findFirst: jest.fn(),
         findUnique: jest.fn(),
         update: jest.fn(),
       },
@@ -186,6 +187,49 @@ describe('UsersService', () => {
       await expect(service.findOne('nonexistent')).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe('findByEmail', () => {
+    it('should return user when email belongs to active user', async () => {
+      const user = {
+        id: '1',
+        name: 'John Doe',
+        phone: '1234567890',
+        email: 'john@example.com',
+        password_hash: 'hashedpassword',
+        role: UserRole.CUSTOMER,
+        status: UserStatus.ACTIVE,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+      };
+
+      prisma.user.findFirst.mockResolvedValue(user);
+
+      const result = await service.findByEmail('john@example.com');
+
+      expect(result).toEqual(user);
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          email: 'john@example.com',
+          deleted_at: null,
+        },
+      });
+    });
+
+    it('should return null when user is soft-deleted', async () => {
+      prisma.user.findFirst.mockResolvedValue(null);
+
+      const result = await service.findByEmail('deleted@example.com');
+
+      expect(result).toBeNull();
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          email: 'deleted@example.com',
+          deleted_at: null,
+        },
+      });
     });
   });
 
