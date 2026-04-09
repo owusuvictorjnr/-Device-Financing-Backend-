@@ -3,9 +3,17 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+const isPrismaGenerateCommand = process.argv.some(
+  (arg) => arg === "generate" || arg.endsWith(":generate"),
+);
 const databaseUrl = process.env["DATABASE_URL"]?.trim();
+const fallbackDatabaseUrl =
+  "postgresql://placeholder:placeholder@localhost:5432/placeholder?schema=public";
 
-if (!databaseUrl || databaseUrl === "\"\"" || databaseUrl === "''") {
+if (
+  (!databaseUrl || databaseUrl === "\"\"" || databaseUrl === "''") &&
+  !isPrismaGenerateCommand
+) {
   throw new Error("DATABASE_URL must be set for Prisma commands.");
 }
 
@@ -16,6 +24,6 @@ export default defineConfig({
     seed: "ts-node prisma/seed.ts",
   },
   datasource: {
-    url: databaseUrl,
+    url: databaseUrl || fallbackDatabaseUrl,
   },
 });
