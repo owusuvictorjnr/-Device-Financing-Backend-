@@ -1,12 +1,10 @@
-version: '3.9'
-
 services:
   api:
     build: .
     container_name: device-financing-api
     restart: always
     ports:
-      - "3000:3000"
+      - "3001:3000"
     env_file:
       - .env
     depends_on:
@@ -31,12 +29,12 @@ services:
     image: postgres:15
     container_name: postgres
     restart: always
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: device_financing
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -44,8 +42,6 @@ services:
     image: redis:7
     container_name: redis
     restart: always
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
 
