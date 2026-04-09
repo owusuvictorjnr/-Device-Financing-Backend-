@@ -2,21 +2,38 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { PrismaService } from '../database/prisma.service';
-import { UserRole, UserStatus } from '@prisma/client';
-/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unnecessary-type-assertion */
+import { UserRole, UserStatus, type User } from '@prisma/client';
+
+type PrismaUserDelegateMock = {
+  create: jest.Mock<Promise<User>, [{ data: Record<string, unknown> }]>;
+  findMany: jest.Mock<Promise<User[]>, [Record<string, unknown>]>;
+  findFirst: jest.Mock<Promise<User | null>, [Record<string, unknown>]>;
+  findUnique: jest.Mock<Promise<User | null>, [Record<string, unknown>]>;
+  update: jest.Mock<
+    Promise<User>,
+    [{ where: { id: string }; data: Record<string, unknown> }]
+  >;
+};
+
+type PrismaServiceMock = {
+  user: PrismaUserDelegateMock;
+};
 
 describe('UsersService', () => {
   let service: UsersService;
-  let prisma: jest.Mocked<PrismaService>;
+  let prisma: PrismaServiceMock;
 
   beforeEach(async () => {
-    const mockPrismaService = {
+    const mockPrismaService: PrismaServiceMock = {
       user: {
-        create: jest.fn(),
-        findMany: jest.fn(),
-        findFirst: jest.fn(),
-        findUnique: jest.fn(),
-        update: jest.fn(),
+        create: jest.fn<Promise<User>, [{ data: Record<string, unknown> }]>(),
+        findMany: jest.fn<Promise<User[]>, [Record<string, unknown>]>(),
+        findFirst: jest.fn<Promise<User | null>, [Record<string, unknown>]>(),
+        findUnique: jest.fn<Promise<User | null>, [Record<string, unknown>]>(),
+        update: jest.fn<
+          Promise<User>,
+          [{ where: { id: string }; data: Record<string, unknown> }]
+        >(),
       },
     };
 
@@ -25,13 +42,13 @@ describe('UsersService', () => {
         UsersService,
         {
           provide: PrismaService,
-          useValue: mockPrismaService as unknown as PrismaService,
+          useValue: mockPrismaService,
         },
       ],
     }).compile();
 
     service = module.get<UsersService>(UsersService);
-    prisma = module.get(PrismaService) as unknown as jest.Mocked<PrismaService>;
+    prisma = mockPrismaService;
   });
 
   it('should be defined', () => {
@@ -73,9 +90,9 @@ describe('UsersService', () => {
         email: 'john@example.com',
         role: UserRole.CUSTOMER,
         status: UserStatus.ACTIVE,
-        created_at: prismaMockedUser.created_at,
-        updated_at: prismaMockedUser.updated_at,
-        deleted_at: null,
+        createdAt: prismaMockedUser.created_at,
+        updatedAt: prismaMockedUser.updated_at,
+        deletedAt: null,
       });
       expect(prisma.user.create).toHaveBeenCalled();
     });
@@ -175,9 +192,9 @@ describe('UsersService', () => {
         email: 'john@example.com',
         role: UserRole.CUSTOMER,
         status: UserStatus.ACTIVE,
-        created_at: user.created_at,
-        updated_at: user.updated_at,
-        deleted_at: null,
+        createdAt: user.created_at,
+        updatedAt: user.updated_at,
+        deletedAt: null,
       });
     });
 
@@ -292,7 +309,7 @@ describe('UsersService', () => {
 
   describe('update', () => {
     it('should update user without password', async () => {
-      const updateUserDto = {
+      const updateUserDto: Pick<User, 'name' | 'email'> = {
         name: 'Jane Doe',
         email: 'jane@example.com',
       };
@@ -310,7 +327,7 @@ describe('UsersService', () => {
         deleted_at: null,
       };
 
-      const updatedUser = {
+      const updatedUser: User = {
         ...existingUser,
         ...updateUserDto,
       };
@@ -324,12 +341,12 @@ describe('UsersService', () => {
       expect(result.email).toBe('jane@example.com');
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: '1' },
-        data: expect.objectContaining(updateUserDto),
+        data: updateUserDto,
       });
     });
 
     it('should hash password when provided in update', async () => {
-      const updateUserDto = {
+      const updateUserDto: { password: string } = {
         password: 'newpassword123',
       };
 
@@ -346,7 +363,7 @@ describe('UsersService', () => {
         deleted_at: null,
       };
 
-      const updatedUser = {
+      const updatedUser: User = {
         ...existingUser,
         password_hash: 'newhash',
       };
@@ -356,12 +373,12 @@ describe('UsersService', () => {
 
       await service.update('1', updateUserDto);
 
-      expect(prisma.user.update).toHaveBeenCalledWith({
+      const updateCall = prisma.user.update.mock.calls[0][0];
+
+      expect(updateCall).toMatchObject({
         where: { id: '1' },
-        data: expect.objectContaining({
-          password_hash: expect.any(String),
-        }),
       });
+      expect(typeof updateCall.data.password_hash).toBe('string');
     });
 
     it('should throw BadRequestException if email is already in use', async () => {
@@ -486,6 +503,8 @@ describe('UsersService', () => {
 
   describe('delete', () => {
     it('should soft delete user by setting deleted_at', async () => {
+      const deletedAt = new Date();
+
       const user = {
         id: '1',
         name: 'John Doe',
@@ -499,9 +518,9 @@ describe('UsersService', () => {
         deleted_at: null,
       };
 
-      const deletedUser = {
+      const deletedUser: User = {
         ...user,
-        deleted_at: new Date(),
+        deleted_at: deletedAt,
       };
 
       prisma.user.findUnique.mockResolvedValue(user);
@@ -512,7 +531,7 @@ describe('UsersService', () => {
       expect(result.message).toContain('deleted');
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: '1' },
-        data: { deleted_at: expect.any(Date) },
+        data: { deleted_at: deletedAt },
       });
     });
 

@@ -6,21 +6,37 @@ import { PrismaService } from '../database/prisma.service';
 import { JwtGuard } from '../common/guards/jwt/jwt.guard';
 import { RolesGuard } from '../common/guards/roles/roles.guard';
 import { UserRole, UserStatus } from '@prisma/client';
-/* eslint-disable @typescript-eslint/unbound-method */
 
 describe('UsersController', () => {
   let controller: UsersController;
-  let service: UsersService;
+  let service: {
+    create: jest.Mock;
+    findAll: jest.Mock;
+    findOne: jest.Mock;
+    update: jest.Mock;
+    delete: jest.Mock;
+  };
 
-  const mockGuard: CanActivate = {
+  const mockGuard: jest.Mocked<CanActivate> = {
     canActivate: jest.fn(() => true),
   };
 
   beforeEach(async () => {
+    const mockUsersService = {
+      create: jest.fn(),
+      findAll: jest.fn(),
+      findOne: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
       providers: [
-        UsersService,
+        {
+          provide: UsersService,
+          useValue: mockUsersService,
+        },
         {
           provide: PrismaService,
           useValue: {
@@ -41,7 +57,7 @@ describe('UsersController', () => {
       .compile();
 
     controller = module.get<UsersController>(UsersController);
-    service = module.get<UsersService>(UsersService);
+    service = mockUsersService;
   });
 
   it('should be defined', () => {
@@ -65,12 +81,12 @@ describe('UsersController', () => {
         email: 'john@example.com',
         role: UserRole.CUSTOMER,
         status: UserStatus.ACTIVE,
-        created_at: new Date(),
-        updated_at: new Date(),
-        deleted_at: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
       };
 
-      jest.spyOn(service, 'create').mockResolvedValue(user);
+      service.create.mockResolvedValue(user);
 
       const result = await controller.create(createUserDto);
 
@@ -89,13 +105,13 @@ describe('UsersController', () => {
           email: 'john@example.com',
           role: UserRole.CUSTOMER,
           status: UserStatus.ACTIVE,
-          created_at: new Date(),
-          updated_at: new Date(),
-          deleted_at: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          deletedAt: null,
         },
       ];
 
-      jest.spyOn(service, 'findAll').mockResolvedValue(users);
+      service.findAll.mockResolvedValue(users);
 
       const result = await controller.findAll({ skip: 0, take: 10 });
 
@@ -113,12 +129,12 @@ describe('UsersController', () => {
         email: 'john@example.com',
         role: UserRole.CUSTOMER,
         status: UserStatus.ACTIVE,
-        created_at: new Date(),
-        updated_at: new Date(),
-        deleted_at: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
       };
 
-      jest.spyOn(service, 'findOne').mockResolvedValue(user);
+      service.findOne.mockResolvedValue(user);
 
       const result = await controller.findOne('1');
 
@@ -135,9 +151,9 @@ describe('UsersController', () => {
       email: 'jane.updated@example.com',
       role: UserRole.CUSTOMER,
       status: UserStatus.ACTIVE,
-      created_at: new Date(),
-      updated_at: new Date(),
-      deleted_at: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
     };
 
     it('should allow ADMIN to update any user', async () => {
@@ -151,7 +167,7 @@ describe('UsersController', () => {
       const adminUserId = '1';
       const adminUserRole = UserRole.ADMIN;
 
-      jest.spyOn(service, 'update').mockResolvedValue(updatedUser);
+      service.update.mockResolvedValue(updatedUser);
 
       const result = await controller.update(
         '2',
@@ -173,7 +189,7 @@ describe('UsersController', () => {
       const userId = '2';
       const userRole = UserRole.CUSTOMER;
 
-      jest.spyOn(service, 'update').mockResolvedValue(updatedUser);
+      service.update.mockResolvedValue(updatedUser);
 
       const result = await controller.update(
         '2',
@@ -209,7 +225,7 @@ describe('UsersController', () => {
       const userId = '2';
       const userRole = UserRole.CUSTOMER;
 
-      jest.spyOn(service, 'update').mockResolvedValue(updatedUser);
+      service.update.mockResolvedValue(updatedUser);
 
       // Make a copy to verify original wasn't modified
       const dtoToPass = { ...updateUserDto };
