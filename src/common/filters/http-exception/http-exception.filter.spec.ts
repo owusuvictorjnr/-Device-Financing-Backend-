@@ -78,4 +78,28 @@ describe('HttpExceptionFilter', () => {
       }),
     );
   });
+
+  it('should prefer explicit errors field over message array', () => {
+    const filter = new HttpExceptionFilter();
+    const { host, status, json } = createHost('/api/v1/health');
+    const exception = new HttpException(
+      {
+        message: 'One or more health checks failed',
+        errors: ['Database is down', 'Redis is down'],
+      },
+      HttpStatus.SERVICE_UNAVAILABLE,
+    );
+
+    filter.catch(exception, host);
+
+    expect(status).toHaveBeenCalledWith(HttpStatus.SERVICE_UNAVAILABLE);
+    expect(json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'error',
+        message: 'One or more health checks failed',
+        path: '/api/v1/health',
+        errors: ['Database is down', 'Redis is down'],
+      }),
+    );
+  });
 });
