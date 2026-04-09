@@ -7,6 +7,7 @@ import { createPrismaClientOptions } from '../src/database/prisma-client-options
 const prisma = new PrismaClient(createPrismaClientOptions());
 const SEED_LOAN_ID = '00000000-0000-0000-0000-000000000001';
 const SEED_COMMAND_ID = '00000000-0000-0000-0000-000000000002';
+const SEED_AUDIT_LOG_ID = '00000000-0000-0000-0000-000000000003';
 
 function assertSeedExecutionAllowed(): void {
   if (process.env.NODE_ENV === 'production') {
@@ -46,6 +47,7 @@ async function main(): Promise<void> {
       ...(resetPasswords ? { password_hash: passwordHash } : {}),
       role: 'ADMIN',
       status: 'ACTIVE',
+      deleted_at: null,
     },
     create: {
       name: 'System Administrator',
@@ -65,6 +67,7 @@ async function main(): Promise<void> {
       ...(resetPasswords ? { password_hash: passwordHash } : {}),
       role: 'AGENT',
       status: 'ACTIVE',
+      deleted_at: null,
     },
     create: {
       name: 'Field Agent',
@@ -98,6 +101,7 @@ async function main(): Promise<void> {
       ...(resetPasswords ? { password_hash: passwordHash } : {}),
       role: 'CUSTOMER',
       status: 'ACTIVE',
+      deleted_at: null,
     },
     create: {
       name: 'Sample Customer',
@@ -227,8 +231,21 @@ async function main(): Promise<void> {
     },
   });
 
-  await prisma.auditLog.create({
-    data: {
+  await prisma.auditLog.upsert({
+    where: { id: SEED_AUDIT_LOG_ID },
+    update: {
+      user_id: adminUser.id,
+      action: 'seed.executed',
+      entity: 'system',
+      entity_id: 'seed-script',
+      changes: {
+        users: [adminUser.email, agentUser.email, customerUser.email],
+        note: 'Initial seed data ensured',
+      },
+      ip_address: '127.0.0.1',
+    },
+    create: {
+      id: SEED_AUDIT_LOG_ID,
       user_id: adminUser.id,
       action: 'seed.executed',
       entity: 'system',
