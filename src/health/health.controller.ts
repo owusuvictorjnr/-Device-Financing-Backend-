@@ -12,7 +12,7 @@ export class HealthController {
 
     if (health.status === 'error') {
       throw new ServiceUnavailableException({
-        message: ['One or more health checks failed'],
+        message: 'One or more health checks failed',
         errors: [
           ...(health.data.database === 'down' ? ['Database is down'] : []),
           ...(health.data.redis === 'down' ? ['Redis is down'] : []),
