@@ -48,10 +48,25 @@ export class HttpExceptionFilter implements ExceptionFilter {
             ) {
               const responseWithMessage = exceptionResponse as {
                 message?: string | string[];
+                errors?: string[];
               };
 
               const responseMessage = responseWithMessage.message;
+              const responseErrors = responseWithMessage.errors;
 
+              // If a separate errors array is provided, use it
+              if (Array.isArray(responseErrors) && responseErrors.length > 0) {
+                const messageToParse = Array.isArray(responseMessage)
+                  ? (responseMessage[0] ?? defaultMessage)
+                  : (responseMessage ?? defaultMessage);
+
+                return {
+                  message: messageToParse,
+                  errors: responseErrors,
+                };
+              }
+
+              // Fall back to treating message as array of errors
               if (Array.isArray(responseMessage)) {
                 return {
                   message: responseMessage[0] ?? defaultMessage,
