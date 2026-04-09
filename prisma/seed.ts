@@ -5,16 +5,45 @@ import dayjs from 'dayjs';
 import { createPrismaClientOptions } from '../src/database/prisma-client-options';
 
 const prisma = new PrismaClient(createPrismaClientOptions());
+const SEED_LOAN_ID = '00000000-0000-0000-0000-000000000001';
+const SEED_COMMAND_ID = '00000000-0000-0000-0000-000000000002';
+
+function assertSeedExecutionAllowed(): void {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Seeding is blocked when NODE_ENV=production.');
+  }
+
+  if (process.env.ALLOW_SEED !== 'true') {
+    throw new Error('Set ALLOW_SEED=true to run the seed script.');
+  }
+}
+
+function getSeedInitialPassword(): string {
+  const password = process.env.SEED_INITIAL_PASSWORD?.trim();
+
+  if (!password) {
+    throw new Error('SEED_INITIAL_PASSWORD is required for seeding.');
+  }
+
+  return password;
+}
+
+function shouldResetSeedPasswords(): boolean {
+  return process.env.SEED_RESET_PASSWORDS === 'true';
+}
 
 async function main(): Promise<void> {
-  const passwordHash = await hash('Password@123', 10);
+  assertSeedExecutionAllowed();
+
+  const passwordHash = await hash(getSeedInitialPassword(), 10);
+  const resetPasswords = shouldResetSeedPasswords();
 
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@device-finance.local' },
     update: {
       name: 'System Administrator',
       phone: '+233200000001',
-      password_hash: passwordHash,
+      ...(resetPasswords ? { password_hash: passwordHash } : {}),
       role: 'ADMIN',
       status: 'ACTIVE',
     },
@@ -33,7 +62,7 @@ async function main(): Promise<void> {
     update: {
       name: 'Field Agent',
       phone: '+233200000002',
-      password_hash: passwordHash,
+      ...(resetPasswords ? { password_hash: passwordHash } : {}),
       role: 'AGENT',
       status: 'ACTIVE',
     },
@@ -66,7 +95,7 @@ async function main(): Promise<void> {
     update: {
       name: 'Sample Customer',
       phone: '+233200000003',
-      password_hash: passwordHash,
+      ...(resetPasswords ? { password_hash: passwordHash } : {}),
       role: 'CUSTOMER',
       status: 'ACTIVE',
     },
@@ -119,7 +148,7 @@ async function main(): Promise<void> {
   const dueDate = today.add(90, 'day').toDate();
 
   const loan = await prisma.loan.upsert({
-    where: { id: 'seed-loan-0001' },
+    where: { id: SEED_LOAN_ID },
     update: {
       customer_id: customer.id,
       device_id: device.id,
@@ -134,7 +163,7 @@ async function main(): Promise<void> {
       deleted_at: null,
     },
     create: {
-      id: 'seed-loan-0001',
+      id: SEED_LOAN_ID,
       customer_id: customer.id,
       device_id: device.id,
       agent_id: agentUser.id,
@@ -173,7 +202,7 @@ async function main(): Promise<void> {
   });
 
   await prisma.command.upsert({
-    where: { id: 'seed-command-0001' },
+    where: { id: SEED_COMMAND_ID },
     update: {
       device_id: device.id,
       loan_id: loan.id,
@@ -186,7 +215,7 @@ async function main(): Promise<void> {
       deleted_at: null,
     },
     create: {
-      id: 'seed-command-0001',
+      id: SEED_COMMAND_ID,
       device_id: device.id,
       loan_id: loan.id,
       command_type: 'SYNC',
