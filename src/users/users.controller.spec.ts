@@ -126,4 +126,104 @@ describe('UsersController', () => {
       expect(service.findOne).toHaveBeenCalledWith('1');
     });
   });
+
+  describe('update', () => {
+    const updatedUser = {
+      id: '2',
+      name: 'Jane Smith Updated',
+      phone: '9876543210',
+      email: 'jane.updated@example.com',
+      role: UserRole.CUSTOMER,
+      status: UserStatus.ACTIVE,
+      created_at: new Date(),
+      updated_at: new Date(),
+      deleted_at: null,
+    };
+
+    it('should allow ADMIN to update any user', async () => {
+      const updateUserDto = {
+        name: 'Jane Smith Updated',
+        phone: '9876543210',
+        email: 'jane.updated@example.com',
+        role: UserRole.AGENT,
+      };
+
+      const adminUserId = '1';
+      const adminUserRole = UserRole.ADMIN;
+
+      jest.spyOn(service, 'update').mockResolvedValue(updatedUser);
+
+      const result = await controller.update(
+        '2',
+        updateUserDto,
+        adminUserId,
+        adminUserRole,
+      );
+
+      expect(result).toEqual(updatedUser);
+      expect(service.update).toHaveBeenCalledWith('2', updateUserDto);
+    });
+
+    it('should allow user to update their own profile', async () => {
+      const updateUserDto = {
+        name: 'Jane Smith Updated',
+        phone: '9876543210',
+      };
+
+      const userId = '2';
+      const userRole = UserRole.CUSTOMER;
+
+      jest.spyOn(service, 'update').mockResolvedValue(updatedUser);
+
+      const result = await controller.update(
+        '2',
+        updateUserDto,
+        userId,
+        userRole,
+      );
+
+      expect(result).toEqual(updatedUser);
+      expect(service.update).toHaveBeenCalled();
+    });
+
+    it('should prevent non-ADMIN from updating another user', async () => {
+      const updateUserDto = {
+        name: 'Jane Smith Updated',
+      };
+
+      const userId = '1';
+      const userRole = UserRole.CUSTOMER;
+
+      await expect(
+        controller.update('2', updateUserDto, userId, userRole),
+      ).rejects.toThrow('You can only update your own profile');
+    });
+
+    it('should filter role/status fields for non-ADMIN users', async () => {
+      const updateUserDto = {
+        name: 'Jane Smith Updated',
+        role: UserRole.ADMIN,
+        status: UserStatus.SUSPENDED,
+      };
+
+      const userId = '2';
+      const userRole = UserRole.CUSTOMER;
+
+      jest.spyOn(service, 'update').mockResolvedValue(updatedUser);
+
+      // Make a copy to verify original wasn't modified
+      const dtoToPass = { ...updateUserDto };
+
+      await controller.update('2', dtoToPass, userId, userRole);
+
+      // Verify role and status were filtered out
+      expect(service.update).toHaveBeenCalledWith(
+        '2',
+        expect.not.objectContaining({
+          role: UserRole.ADMIN,
+          status: UserStatus.SUSPENDED,
+        }),
+      );
+    });
+  });
 });
