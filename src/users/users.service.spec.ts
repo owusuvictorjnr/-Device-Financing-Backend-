@@ -106,6 +106,46 @@ describe('UsersService', () => {
         BadRequestException,
       );
     });
+
+    it('should map Prisma P2002 email conflict to BadRequestException', async () => {
+      const createUserDto = {
+        name: 'John Doe',
+        phone: '1234567890',
+        email: 'john@example.com',
+        password: 'password123',
+        role: UserRole.CUSTOMER,
+      };
+
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.create.mockRejectedValue({
+        code: 'P2002',
+        meta: { target: ['email'] },
+      });
+
+      await expect(service.create(createUserDto)).rejects.toThrow(
+        'Email already in use',
+      );
+    });
+
+    it('should map Prisma P2002 phone conflict to BadRequestException', async () => {
+      const createUserDto = {
+        name: 'John Doe',
+        phone: '1234567890',
+        email: 'john@example.com',
+        password: 'password123',
+        role: UserRole.CUSTOMER,
+      };
+
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.create.mockRejectedValue({
+        code: 'P2002',
+        meta: { target: ['phone'] },
+      });
+
+      await expect(service.create(createUserDto)).rejects.toThrow(
+        'Phone number already in use',
+      );
+    });
   });
 
   describe('findOne', () => {
@@ -310,6 +350,92 @@ describe('UsersService', () => {
 
       await expect(service.update('1', updateUserDto)).rejects.toThrow(
         BadRequestException,
+      );
+    });
+
+    it('should map Prisma P2002 email conflict to BadRequestException on update', async () => {
+      const updateUserDto = {
+        email: 'updated@example.com',
+      };
+
+      const existingUser = {
+        id: '1',
+        name: 'John Doe',
+        phone: '1234567890',
+        email: 'john@example.com',
+        password_hash: 'hash',
+        role: UserRole.CUSTOMER,
+        status: UserStatus.ACTIVE,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+      };
+
+      prisma.user.findUnique.mockResolvedValue(existingUser);
+      prisma.user.update.mockRejectedValue({
+        code: 'P2002',
+        meta: { target: ['email'] },
+      });
+
+      await expect(service.update('1', updateUserDto)).rejects.toThrow(
+        'Email already in use',
+      );
+    });
+
+    it('should map Prisma P2002 phone conflict to BadRequestException on update', async () => {
+      const updateUserDto = {
+        phone: '0001112222',
+      };
+
+      const existingUser = {
+        id: '1',
+        name: 'John Doe',
+        phone: '1234567890',
+        email: 'john@example.com',
+        password_hash: 'hash',
+        role: UserRole.CUSTOMER,
+        status: UserStatus.ACTIVE,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+      };
+
+      prisma.user.findUnique.mockResolvedValue(existingUser);
+      prisma.user.update.mockRejectedValue({
+        code: 'P2002',
+        meta: { target: ['phone'] },
+      });
+
+      await expect(service.update('1', updateUserDto)).rejects.toThrow(
+        'Phone number already in use',
+      );
+    });
+
+    it('should map Prisma P2025 to NotFoundException on update', async () => {
+      const updateUserDto = {
+        name: 'Jane Doe',
+      };
+
+      const existingUser = {
+        id: '1',
+        name: 'John Doe',
+        phone: '1234567890',
+        email: 'john@example.com',
+        password_hash: 'hash',
+        role: UserRole.CUSTOMER,
+        status: UserStatus.ACTIVE,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+      };
+
+      prisma.user.findUnique.mockResolvedValue(existingUser);
+      prisma.user.update.mockRejectedValue({
+        code: 'P2025',
+      });
+
+      await expect(service.update('1', updateUserDto)).rejects.toThrow(
+        NotFoundException,
       );
     });
   });
