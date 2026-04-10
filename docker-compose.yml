@@ -11,8 +11,6 @@ services:
       - postgres
       - redis
     command: node dist/main.js
-    volumes:
-      - .:/app
 
   worker:
     build: .
