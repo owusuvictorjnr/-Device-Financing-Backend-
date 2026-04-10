@@ -94,7 +94,7 @@ enum CommandStatus {
 // ============================================================================
 
 model User {
-  id            String       @id @default(uuid())
+  id            String       @id @default(uuid()) @db.Uuid
   name          String
   phone         String       @unique
   email         String       @unique
@@ -118,8 +118,8 @@ model User {
 }
 
 model Agent {
-  id              String   @id @default(uuid())
-  user_id         String   @unique
+  id              String   @id @default(uuid()) @db.Uuid
+  user_id         String   @unique @db.Uuid
   region          String
   commission_rate Float
   created_at      DateTime @default(now())
@@ -135,9 +135,9 @@ model Agent {
 }
 
 model Customer {
-  id           String   @id @default(uuid())
-  user_id      String   @unique
-  agent_id     String
+  id           String   @id @default(uuid()) @db.Uuid
+  user_id      String   @unique @db.Uuid
+  agent_id     String   @db.Uuid
   national_id  String   @unique
   address      String
   created_at   DateTime @default(now())
@@ -155,13 +155,13 @@ model Customer {
 }
 
 model Device {
-  id              String         @id @default(uuid())
+  id              String         @id @default(uuid()) @db.Uuid
   serial_number   String         @unique
   device_type     DeviceType
   platform        DevicePlatform
   model           String
   status          DeviceStatus   @default(ACTIVE)
-  customer_id     String?
+  customer_id     String?        @db.Uuid
   last_seen       DateTime?
   created_at      DateTime       @default(now())
   updated_at      DateTime       @updatedAt
@@ -179,10 +179,10 @@ model Device {
 }
 
 model Loan {
-  id                 String     @id @default(uuid())
-  customer_id        String
-  device_id          String
-  agent_id           String
+  id                 String     @id @default(uuid()) @db.Uuid
+  customer_id        String     @db.Uuid
+  device_id          String     @db.Uuid
+  agent_id           String     @db.Uuid
   principal_amount   Decimal
   installment_amount Decimal
   duration_days      Int
@@ -209,15 +209,15 @@ model Loan {
 }
 
 model Payment {
-  id             String            @id @default(uuid())
-  loan_id        String
+  id             String            @id @default(uuid()) @db.Uuid
+  loan_id        String            @db.Uuid
   amount         Decimal
   payment_method PaymentMethod
   reference      String            @unique
   status         PaymentStatus     @default(PENDING)
   paid_at        DateTime?
   recorded_by    PaymentRecordedBy
-  recorded_by_id String?
+  recorded_by_id String?           @db.Uuid
   created_at     DateTime          @default(now())
   updated_at     DateTime          @updatedAt
   deleted_at     DateTime?
@@ -234,15 +234,15 @@ model Payment {
 }
 
 model Command {
-  id              String        @id @default(uuid())
-  device_id       String
-  loan_id         String
+  id              String        @id @default(uuid()) @db.Uuid
+  device_id       String        @db.Uuid
+  loan_id         String        @db.Uuid
   command_type    CommandType
   status          CommandStatus @default(PENDING)
   sent_at         DateTime?
   acknowledged_at DateTime?
   retry_count     Int           @default(0)
-  issued_by_id    String?
+  issued_by_id    String?       @db.Uuid
   created_at      DateTime      @default(now())
   updated_at      DateTime      @updatedAt
   deleted_at      DateTime?
@@ -260,8 +260,8 @@ model Command {
 }
 
 model AuditLog {
-  id         String   @id @default(uuid())
-  user_id    String?
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String?  @db.Uuid
   action     String
   entity     String
   entity_id  String
