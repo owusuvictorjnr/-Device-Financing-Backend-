@@ -20,15 +20,12 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate": "prisma migrate dev --skip-seed",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:migrate:reset": "prisma migrate reset --skip-seed",
     "prisma:seed": "prisma db seed",
     "prisma:studio": "prisma studio",
     "worker": "ts-node src/jobs/worker.ts"
-  },
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
   },
   "lint-staged": {
     "src/**/*.ts": [
