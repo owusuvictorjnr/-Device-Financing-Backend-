@@ -33,7 +33,7 @@ CREATE TYPE "CommandStatus" AS ENUM ('PENDING', 'SENT', 'ACKNOWLEDGED', 'FAILED'
 
 -- CreateTable
 CREATE TABLE "User" (
-    "id" TEXT NOT NULL,
+    "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -49,8 +49,8 @@ CREATE TABLE "User" (
 
 -- CreateTable
 CREATE TABLE "Agent" (
-    "id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
+    "id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
     "region" TEXT NOT NULL,
     "commission_rate" DOUBLE PRECISION NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -62,9 +62,9 @@ CREATE TABLE "Agent" (
 
 -- CreateTable
 CREATE TABLE "Customer" (
-    "id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "agent_id" TEXT NOT NULL,
+    "id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "agent_id" UUID NOT NULL,
     "national_id" TEXT NOT NULL,
     "address" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -76,13 +76,13 @@ CREATE TABLE "Customer" (
 
 -- CreateTable
 CREATE TABLE "Device" (
-    "id" TEXT NOT NULL,
+    "id" UUID NOT NULL,
     "serial_number" TEXT NOT NULL,
     "device_type" "DeviceType" NOT NULL,
     "platform" "DevicePlatform" NOT NULL,
     "model" TEXT NOT NULL,
     "status" "DeviceStatus" NOT NULL DEFAULT 'ACTIVE',
-    "customer_id" TEXT,
+    "customer_id" UUID,
     "last_seen" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -93,10 +93,10 @@ CREATE TABLE "Device" (
 
 -- CreateTable
 CREATE TABLE "Loan" (
-    "id" TEXT NOT NULL,
-    "customer_id" TEXT NOT NULL,
-    "device_id" TEXT NOT NULL,
-    "agent_id" TEXT NOT NULL,
+    "id" UUID NOT NULL,
+    "customer_id" UUID NOT NULL,
+    "device_id" UUID NOT NULL,
+    "agent_id" UUID NOT NULL,
     "principal_amount" DECIMAL(65,30) NOT NULL,
     "installment_amount" DECIMAL(65,30) NOT NULL,
     "duration_days" INTEGER NOT NULL,
@@ -113,15 +113,15 @@ CREATE TABLE "Loan" (
 
 -- CreateTable
 CREATE TABLE "Payment" (
-    "id" TEXT NOT NULL,
-    "loan_id" TEXT NOT NULL,
+    "id" UUID NOT NULL,
+    "loan_id" UUID NOT NULL,
     "amount" DECIMAL(65,30) NOT NULL,
     "payment_method" "PaymentMethod" NOT NULL,
     "reference" TEXT NOT NULL,
     "status" "PaymentStatus" NOT NULL DEFAULT 'PENDING',
     "paid_at" TIMESTAMP(3),
     "recorded_by" "PaymentRecordedBy" NOT NULL,
-    "recorded_by_id" TEXT,
+    "recorded_by_id" UUID,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
@@ -131,15 +131,15 @@ CREATE TABLE "Payment" (
 
 -- CreateTable
 CREATE TABLE "Command" (
-    "id" TEXT NOT NULL,
-    "device_id" TEXT NOT NULL,
-    "loan_id" TEXT NOT NULL,
+    "id" UUID NOT NULL,
+    "device_id" UUID NOT NULL,
+    "loan_id" UUID NOT NULL,
     "command_type" "CommandType" NOT NULL,
     "status" "CommandStatus" NOT NULL DEFAULT 'PENDING',
     "sent_at" TIMESTAMP(3),
     "acknowledged_at" TIMESTAMP(3),
     "retry_count" INTEGER NOT NULL DEFAULT 0,
-    "issued_by_id" TEXT,
+    "issued_by_id" UUID,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
@@ -149,8 +149,8 @@ CREATE TABLE "Command" (
 
 -- CreateTable
 CREATE TABLE "AuditLog" (
-    "id" TEXT NOT NULL,
-    "user_id" TEXT,
+    "id" UUID NOT NULL,
+    "user_id" UUID,
     "action" TEXT NOT NULL,
     "entity" TEXT NOT NULL,
     "entity_id" TEXT NOT NULL,
