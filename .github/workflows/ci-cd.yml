@@ -33,3 +33,12 @@ jobs:
 
       - name: Run tests
         run: yarn test --passWithNoTests
+
+      - name: Validate Docker Compose config
+        env:
+          API_HOST_PORT: "3001"
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: device_financing
+          POSTGRES_HOST_PORT: "5433"
+        run: docker compose config > /dev/null
