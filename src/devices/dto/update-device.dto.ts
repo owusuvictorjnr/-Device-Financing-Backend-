@@ -23,9 +23,9 @@ export class UpdateDeviceDto {
   @IsEnum(DeviceStatus)
   status?: DeviceStatus;
 
-  @ValidateIf((_, value) => value !== undefined)
+  @ValidateIf((_, value) => value !== undefined && value !== null)
   @IsUUID()
-  customerId?: string;
+  customerId?: string | null;
 
   @ValidateIf((_, value) => value !== undefined)
   @Type(() => Date)
