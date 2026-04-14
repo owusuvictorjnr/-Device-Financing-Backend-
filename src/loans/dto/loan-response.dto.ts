@@ -4,7 +4,7 @@ export class LoanResponseDto {
   id!: string;
   customerId!: string;
   deviceId!: string;
-  agentId!: string;
+  agentUserId!: string;
   principalAmount!: string;
   installmentAmount!: string;
   durationDays!: number;
