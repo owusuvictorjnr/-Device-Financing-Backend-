@@ -164,10 +164,17 @@ export class CustomersService {
     const customer = await this.getCustomerById(id);
     await this.assertCustomerAccess(customer, actor);
 
-    await this.prisma.customer.update({
-      where: { id },
+    const result = await this.prisma.customer.updateMany({
+      where: {
+        id,
+        deleted_at: null,
+      },
       data: { deleted_at: new Date() },
     });
+
+    if (result.count === 0) {
+      throw new NotFoundException(`Customer with ID ${id} not found`);
+    }
 
     return { message: `Customer ${id} has been deleted` };
   }
