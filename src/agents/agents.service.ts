@@ -4,6 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
+import {
+  getPrismaUniqueConstraintTarget,
+  isPrismaErrorCode,
+} from '../common/prisma/prisma-error.utils';
 import { PrismaService } from '../database/prisma.service';
 import { AgentResponseDto, CreateAgentDto, UpdateAgentDto } from './dto';
 
@@ -79,7 +83,17 @@ export class AgentsService {
     id: string,
     updateAgentDto: UpdateAgentDto,
   ): Promise<AgentResponseDto> {
-    await this.findOne(id);
+    const existingAgent = await this.prisma.agent.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        deleted_at: true,
+      },
+    });
+
+    if (!existingAgent || existingAgent.deleted_at) {
+      throw new NotFoundException(`Agent with ID ${id} not found`);
+    }
 
     if (updateAgentDto.userId) {
       await this.assertValidAgentUser(updateAgentDto.userId);
@@ -124,12 +138,17 @@ export class AgentsService {
   }
 
   async delete(id: string): Promise<{ message: string }> {
-    await this.findOne(id);
-
-    await this.prisma.agent.update({
-      where: { id },
+    const result = await this.prisma.agent.updateMany({
+      where: {
+        id,
+        deleted_at: null,
+      },
       data: { deleted_at: new Date() },
     });
+
+    if (result.count === 0) {
+      throw new NotFoundException(`Agent with ID ${id} not found`);
+    }
 
     return { message: `Agent ${id} has been deleted` };
   }
@@ -173,11 +192,11 @@ export class AgentsService {
   }
 
   private handleUniqueConstraintError(error: unknown): void {
-    if (!this.isPrismaError(error, 'P2002')) {
+    if (!isPrismaErrorCode(error, 'P2002')) {
       return;
     }
 
-    const target = this.getUniqueConstraintTarget(error);
+    const target = getPrismaUniqueConstraintTarget(error);
 
     if (target.includes('user_id')) {
       throw new BadRequestException('User already has an agent profile');
@@ -187,7 +206,7 @@ export class AgentsService {
   }
 
   private handleRecordNotFoundError(error: unknown, id: string): void {
-    if (!this.isPrismaError(error, 'P2025')) {
+    if (!isPrismaErrorCode(error, 'P2025')) {
       return;
     }
 
@@ -195,42 +214,10 @@ export class AgentsService {
   }
 
   private handleRelatedRecordNotFoundError(error: unknown): void {
-    if (!this.isPrismaError(error, 'P2003')) {
+    if (!isPrismaErrorCode(error, 'P2003')) {
       return;
     }
 
     throw new BadRequestException('Referenced user does not exist');
-  }
-
-  private isPrismaError(error: unknown, code: string): boolean {
-    if (!error || typeof error !== 'object') {
-      return false;
-    }
-
-    return (error as { code?: unknown }).code === code;
-  }
-
-  private getUniqueConstraintTarget(error: unknown): string[] {
-    if (!error || typeof error !== 'object') {
-      return [];
-    }
-
-    const meta = (error as { meta?: unknown }).meta;
-
-    if (!meta || typeof meta !== 'object') {
-      return [];
-    }
-
-    const target = (meta as { target?: unknown }).target;
-
-    if (typeof target === 'string') {
-      return [target];
-    }
-
-    if (Array.isArray(target)) {
-      return target.filter((item): item is string => typeof item === 'string');
-    }
-
-    return [];
   }
 }
