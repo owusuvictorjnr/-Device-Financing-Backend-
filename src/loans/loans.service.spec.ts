@@ -76,18 +76,20 @@ describe('LoansService', () => {
           findUnique: typeof prismaMock.device.findUnique;
         };
         loan: {
+          findFirst: typeof prismaMock.loan.findFirst;
           create: typeof prismaMock.loan.create;
         };
       }): Promise<unknown>;
     }) =>
       callback({
-        device: {
-          updateMany: prismaMock.device.updateMany,
-          findUnique: prismaMock.device.findUnique,
-        },
-        loan: {
-          create: prismaMock.loan.create,
-        },
+      device: {
+        updateMany: prismaMock.device.updateMany,
+        findUnique: prismaMock.device.findUnique,
+      },
+      loan: {
+        findFirst: prismaMock.loan.findFirst,
+        create: prismaMock.loan.create,
+      },
       }),
     );
   });
@@ -131,6 +133,22 @@ describe('LoansService', () => {
     expect(prismaMock.loan.create).toHaveBeenCalled();
     expect(result.id).toBe('loan-1');
     expect(result.principalAmount).toBe('1000');
+    expect(prismaMock.$transaction).toHaveBeenCalledWith(
+      expect.any(Function),
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      },
+    );
+    expect(prismaMock.loan.findFirst).toHaveBeenCalledWith({
+      where: {
+        device_id: 'device-1',
+        status: {
+          not: LoanStatus.PAID,
+        },
+        deleted_at: null,
+      },
+      select: { id: true },
+    });
   });
 
   it('creates loan as ADMIN with explicit agentUserId', async () => {
