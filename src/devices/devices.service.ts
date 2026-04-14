@@ -49,6 +49,16 @@ export class DevicesService {
     createDeviceDto: CreateDeviceDto,
     actor: AuthActor,
   ): Promise<DeviceResponseDto> {
+    // Explicit role validation for defense-in-depth
+    if (actor.role === UserRole.CUSTOMER) {
+      throw new ForbiddenException('Customers cannot create devices');
+    }
+
+    // For AGENT, validate active agent record exists regardless of customer assignment
+    if (actor.role === UserRole.AGENT) {
+      await this.getActiveAgentByUserId(actor.id);
+    }
+
     const customerId = await this.resolveTargetCustomerId(
       actor,
       createDeviceDto.customerId,
