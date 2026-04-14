@@ -5,8 +5,8 @@ export class LoanResponseDto {
   customerId!: string;
   deviceId!: string;
   agentId!: string;
-  principalAmount!: number;
-  installmentAmount!: number;
+  principalAmount!: string;
+  installmentAmount!: string;
   durationDays!: number;
   startDate!: Date;
   dueDate!: Date;
