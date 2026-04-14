@@ -69,28 +69,29 @@ describe('LoansService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    prismaMock.$transaction.mockImplementation(async (callback: {
-      (tx: {
-        device: {
-          updateMany: typeof prismaMock.device.updateMany;
-          findUnique: typeof prismaMock.device.findUnique;
-        };
-        loan: {
-          findFirst: typeof prismaMock.loan.findFirst;
-          create: typeof prismaMock.loan.create;
-        };
-      }): Promise<unknown>;
-    }) =>
-      callback({
-      device: {
-        updateMany: prismaMock.device.updateMany,
-        findUnique: prismaMock.device.findUnique,
-      },
-      loan: {
-        findFirst: prismaMock.loan.findFirst,
-        create: prismaMock.loan.create,
-      },
-      }),
+    prismaMock.$transaction.mockImplementation(
+      async (callback: {
+        (tx: {
+          device: {
+            updateMany: typeof prismaMock.device.updateMany;
+            findUnique: typeof prismaMock.device.findUnique;
+          };
+          loan: {
+            findFirst: typeof prismaMock.loan.findFirst;
+            create: typeof prismaMock.loan.create;
+          };
+        }): Promise<unknown>;
+      }) =>
+        callback({
+          device: {
+            updateMany: prismaMock.device.updateMany,
+            findUnique: prismaMock.device.findUnique,
+          },
+          loan: {
+            findFirst: prismaMock.loan.findFirst,
+            create: prismaMock.loan.create,
+          },
+        }),
     );
   });
 
@@ -98,7 +99,7 @@ describe('LoansService', () => {
     expect(service).toBeDefined();
   });
 
-  it('creates loan as ADMIN with explicit agentId', async () => {
+  it('creates loan as ADMIN with explicit agentUserId', async () => {
     prismaMock.user.findFirst.mockResolvedValue({ id: 'agent-user-2' });
     prismaMock.agent.findFirst.mockResolvedValue({
       id: 'agent-profile-1',
@@ -113,7 +114,9 @@ describe('LoansService', () => {
       customer_id: 'customer-1',
     });
     prismaMock.device.updateMany.mockResolvedValue({ count: 0 });
-    prismaMock.device.findUnique.mockResolvedValue({ customer_id: 'customer-1' });
+    prismaMock.device.findUnique.mockResolvedValue({
+      customer_id: 'customer-1',
+    });
     prismaMock.loan.findFirst.mockResolvedValue(null);
     prismaMock.loan.create.mockResolvedValue(loanRecord);
 
@@ -125,7 +128,7 @@ describe('LoansService', () => {
         installmentAmount: 100,
         durationDays: 10,
         startDate: new Date('2026-01-01T00:00:00.000Z'),
-        agentId: 'agent-user-2',
+        agentUserId: 'agent-user-2',
       },
       { id: 'admin-1', role: UserRole.ADMIN },
     );
@@ -133,12 +136,9 @@ describe('LoansService', () => {
     expect(prismaMock.loan.create).toHaveBeenCalled();
     expect(result.id).toBe('loan-1');
     expect(result.principalAmount).toBe('1000');
-    expect(prismaMock.$transaction).toHaveBeenCalledWith(
-      expect.any(Function),
-      {
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      },
-    );
+    expect(prismaMock.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    });
     expect(prismaMock.loan.findFirst).toHaveBeenCalledWith({
       where: {
         device_id: 'device-1',
@@ -166,7 +166,9 @@ describe('LoansService', () => {
       customer_id: 'customer-1',
     });
     prismaMock.device.updateMany.mockResolvedValue({ count: 0 });
-    prismaMock.device.findUnique.mockResolvedValue({ customer_id: 'customer-1' });
+    prismaMock.device.findUnique.mockResolvedValue({
+      customer_id: 'customer-1',
+    });
     prismaMock.loan.findFirst.mockResolvedValue(null);
     prismaMock.loan.create.mockResolvedValue(loanRecord);
 
@@ -185,24 +187,6 @@ describe('LoansService', () => {
 
     expect(prismaMock.loan.create).toHaveBeenCalled();
     expect(result.id).toBe('loan-1');
-  });
-
-  it('rejects create when both agentUserId and agentId are provided but different', async () => {
-    await expect(
-      service.create(
-        {
-          customerId: 'customer-1',
-          deviceId: 'device-1',
-          principalAmount: 1000,
-          installmentAmount: 100,
-          durationDays: 10,
-          startDate: new Date('2026-01-01T00:00:00.000Z'),
-          agentUserId: 'agent-user-1',
-          agentId: 'agent-user-2',
-        },
-        { id: 'admin-1', role: UserRole.ADMIN },
-      ),
-    ).rejects.toThrow(BadRequestException);
   });
 
   it('rejects creation when device already has an outstanding loan', async () => {
@@ -230,7 +214,7 @@ describe('LoansService', () => {
           installmentAmount: 100,
           durationDays: 10,
           startDate: new Date('2026-01-01T00:00:00.000Z'),
-          agentId: 'agent-user-2',
+          agentUserId: 'agent-user-2',
         },
         { id: 'admin-1', role: UserRole.ADMIN },
       ),
@@ -274,7 +258,7 @@ describe('LoansService', () => {
         installmentAmount: 100,
         durationDays: 10,
         startDate: new Date('2026-01-01T00:00:00.000Z'),
-        agentId: 'agent-user-2',
+        agentUserId: 'agent-user-2',
       },
       { id: 'admin-1', role: UserRole.ADMIN },
     );
@@ -292,7 +276,7 @@ describe('LoansService', () => {
     expect(prismaMock.loan.create).toHaveBeenCalled();
   });
 
-  it('rejects ADMIN create when agentId is missing', async () => {
+  it('rejects ADMIN create when agentUserId is missing', async () => {
     await expect(
       service.create(
         {
@@ -383,7 +367,9 @@ describe('LoansService', () => {
       customer_id: 'customer-1',
     });
     prismaMock.device.updateMany.mockResolvedValue({ count: 0 });
-    prismaMock.device.findUnique.mockResolvedValue({ customer_id: 'customer-1' });
+    prismaMock.device.findUnique.mockResolvedValue({
+      customer_id: 'customer-1',
+    });
     prismaMock.loan.findFirst.mockResolvedValue(null);
     prismaMock.loan.create.mockResolvedValue(loanRecord);
 
@@ -445,20 +431,6 @@ describe('LoansService', () => {
     });
   });
 
-  it('rejects findAll when both agentUserId and agentId differ', async () => {
-    await expect(
-      service.findAll(
-        {
-          skip: 0,
-          take: 10,
-          agentUserId: 'agent-user-1',
-          agentId: 'agent-user-2',
-        },
-        { id: 'admin-1', role: UserRole.ADMIN },
-      ),
-    ).rejects.toThrow(BadRequestException);
-  });
-
   it('updates loan and recomputes due_date when durationDays changes', async () => {
     prismaMock.loan.findUnique.mockResolvedValue(loanRecord);
     prismaMock.loan.update.mockResolvedValue({
@@ -497,17 +469,24 @@ describe('LoansService', () => {
   it('soft-deletes loan and returns message', async () => {
     prismaMock.loan.findUnique.mockResolvedValue(loanRecord);
     prismaMock.loan.updateMany.mockResolvedValue({ count: 1 });
+    jest.useFakeTimers();
+    const deletedAt = new Date('2026-01-03T00:00:00.000Z');
+    jest.setSystemTime(deletedAt);
 
-    const result = await service.delete('loan-1', {
-      id: 'admin-1',
-      role: UserRole.ADMIN,
-    });
+    try {
+      const result = await service.delete('loan-1', {
+        id: 'admin-1',
+        role: UserRole.ADMIN,
+      });
 
-    expect(prismaMock.loan.updateMany).toHaveBeenCalledWith({
-      where: { id: 'loan-1', deleted_at: null },
-      data: { deleted_at: expect.any(Date) },
-    });
-    expect(result).toEqual({ message: 'Loan loan-1 has been deleted' });
+      expect(prismaMock.loan.updateMany).toHaveBeenCalledWith({
+        where: { id: 'loan-1', deleted_at: null },
+        data: { deleted_at: deletedAt },
+      });
+      expect(result).toEqual({ message: 'Loan loan-1 has been deleted' });
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('rejects CUSTOMER from deleting loans', async () => {
