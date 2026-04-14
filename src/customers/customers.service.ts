@@ -46,7 +46,9 @@ export class CustomersService {
       createCustomerDto.agentId,
     );
     await this.assertValidCustomerUser(createCustomerDto.userId);
-    await this.assertAgentExists(agentId);
+    if (actor.role !== UserRole.AGENT) {
+      await this.assertAgentExists(agentId);
+    }
 
     try {
       const customer = await this.prisma.customer.create({
@@ -109,7 +111,7 @@ export class CustomersService {
     const customer = await this.getCustomerById(id);
     await this.assertCustomerAccess(customer, actor);
 
-    if (updateCustomerDto.userId) {
+    if (updateCustomerDto.userId !== undefined) {
       await this.assertValidCustomerUser(updateCustomerDto.userId);
 
       const existingCustomerForUser = await this.prisma.customer.findUnique({
@@ -127,7 +129,9 @@ export class CustomersService {
         actor,
         updateCustomerDto.agentId,
       );
-      await this.assertAgentExists(targetAgentId);
+      if (actor.role !== UserRole.AGENT) {
+        await this.assertAgentExists(targetAgentId);
+      }
     }
 
     try {
