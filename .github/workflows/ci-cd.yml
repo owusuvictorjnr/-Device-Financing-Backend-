@@ -35,12 +35,16 @@ jobs:
         run: yarn test --passWithNoTests
 
       - name: Create CI env file for Compose validation
+        env:
+          CI_DYNAMIC_SECRET: ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
+          POSTGRES_USER: postgres
+          POSTGRES_DB: device_financing
         run: |
-          cat > .env << 'EOF'
+          cat > .env << EOF
           NODE_ENV=test
           PORT=3000
-          JWT_SECRET=ci-placeholder-secret
-          DATABASE_URL=postgresql://postgres:postgres@postgres:5432/device_financing
+          JWT_SECRET=${CI_DYNAMIC_SECRET}
+          DATABASE_URL=postgresql://${POSTGRES_USER}:${CI_DYNAMIC_SECRET}@postgres:5432/${POSTGRES_DB}
           REDIS_HOST=redis
           REDIS_PORT=6379
           EOF
