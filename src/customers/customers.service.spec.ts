@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { CustomersService } from './customers.service';
 import { PrismaService } from '../database/prisma.service';
@@ -231,5 +231,109 @@ describe('CustomersService', () => {
     expect(capturedUpdateArgs?.where).toEqual({ id: 'customer-1' });
     expect(capturedUpdateArgs?.data.deleted_at).toBeInstanceOf(Date);
     expect(result).toEqual({ message: 'Customer customer-1 has been deleted' });
+  });
+
+  it('denies findOne when AGENT tries to access another agent customer', async () => {
+    prismaMock.customer.findUnique.mockResolvedValue(customerRecord);
+    prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-2' });
+
+    await expect(
+      service.findOne('customer-1', {
+        id: 'agent-user-1',
+        role: UserRole.AGENT,
+      }),
+    ).rejects.toThrow(
+      new ForbiddenException('You can only access your assigned customers'),
+    );
+
+    expect(prismaMock.customer.findUnique).toHaveBeenCalledTimes(1);
+    expect(prismaMock.customer.update).not.toHaveBeenCalled();
+  });
+
+  it('denies findOne when AGENT has no active agent profile', async () => {
+    prismaMock.customer.findUnique.mockResolvedValue(customerRecord);
+    prismaMock.agent.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.findOne('customer-1', {
+        id: 'agent-user-1',
+        role: UserRole.AGENT,
+      }),
+    ).rejects.toThrow(
+      new ForbiddenException('Authenticated user is not an active agent'),
+    );
+
+    expect(prismaMock.customer.findUnique).toHaveBeenCalledTimes(1);
+    expect(prismaMock.customer.update).not.toHaveBeenCalled();
+  });
+
+  it('denies update when AGENT tries to update another agent customer', async () => {
+    prismaMock.customer.findUnique.mockResolvedValue(customerRecord);
+    prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-2' });
+
+    await expect(
+      service.update(
+        'customer-1',
+        { address: 'Tema' },
+        { id: 'agent-user-1', role: UserRole.AGENT },
+      ),
+    ).rejects.toThrow(
+      new ForbiddenException('You can only access your assigned customers'),
+    );
+
+    expect(prismaMock.customer.findUnique).toHaveBeenCalledTimes(1);
+    expect(prismaMock.customer.update).not.toHaveBeenCalled();
+  });
+
+  it('denies update when AGENT has no active agent profile', async () => {
+    prismaMock.customer.findUnique.mockResolvedValue(customerRecord);
+    prismaMock.agent.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.update(
+        'customer-1',
+        { address: 'Tema' },
+        { id: 'agent-user-1', role: UserRole.AGENT },
+      ),
+    ).rejects.toThrow(
+      new ForbiddenException('Authenticated user is not an active agent'),
+    );
+
+    expect(prismaMock.customer.findUnique).toHaveBeenCalledTimes(1);
+    expect(prismaMock.customer.update).not.toHaveBeenCalled();
+  });
+
+  it('denies delete when AGENT tries to delete another agent customer', async () => {
+    prismaMock.customer.findUnique.mockResolvedValue(customerRecord);
+    prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-2' });
+
+    await expect(
+      service.delete('customer-1', {
+        id: 'agent-user-1',
+        role: UserRole.AGENT,
+      }),
+    ).rejects.toThrow(
+      new ForbiddenException('You can only access your assigned customers'),
+    );
+
+    expect(prismaMock.customer.findUnique).toHaveBeenCalledTimes(1);
+    expect(prismaMock.customer.update).not.toHaveBeenCalled();
+  });
+
+  it('denies delete when AGENT has no active agent profile', async () => {
+    prismaMock.customer.findUnique.mockResolvedValue(customerRecord);
+    prismaMock.agent.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.delete('customer-1', {
+        id: 'agent-user-1',
+        role: UserRole.AGENT,
+      }),
+    ).rejects.toThrow(
+      new ForbiddenException('Authenticated user is not an active agent'),
+    );
+
+    expect(prismaMock.customer.findUnique).toHaveBeenCalledTimes(1);
+    expect(prismaMock.customer.update).not.toHaveBeenCalled();
   });
 });
