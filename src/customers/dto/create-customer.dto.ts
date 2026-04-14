@@ -9,7 +9,7 @@ export class CreateCustomerDto {
   @IsUUID()
   @ApiPropertyOptional({
     description:
-      'Required for ADMIN requests. Ignored for AGENT requests, where the authenticated agent is used automatically.',
+      'Required for ADMIN requests. For AGENT requests, omit this field or provide the authenticated agent ID; mismatched values are rejected.',
     format: 'uuid',
   })
   agentId?: string;
