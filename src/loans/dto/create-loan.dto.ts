@@ -60,5 +60,14 @@ export class CreateLoanDto {
   })
   @IsOptional()
   @IsUUID()
+  agentUserId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Deprecated alias for agentUserId (kept for backward compatibility)',
+    format: 'uuid',
+    deprecated: true,
+  })
+  @IsOptional()
+  @IsUUID()
   agentId?: string;
 }
