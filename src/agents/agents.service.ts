@@ -95,7 +95,7 @@ export class AgentsService {
       throw new NotFoundException(`Agent with ID ${id} not found`);
     }
 
-    if (updateAgentDto.userId) {
+    if (updateAgentDto.userId !== undefined) {
       await this.assertValidAgentUser(updateAgentDto.userId);
 
       const existingAgentForUser = await this.prisma.agent.findUnique({
@@ -111,7 +111,9 @@ export class AgentsService {
       const agent = await this.prisma.agent.update({
         where: { id },
         data: {
-          ...(updateAgentDto.userId ? { user_id: updateAgentDto.userId } : {}),
+          ...(updateAgentDto.userId !== undefined
+            ? { user_id: updateAgentDto.userId }
+            : {}),
           ...(updateAgentDto.region !== undefined
             ? { region: updateAgentDto.region }
             : {}),
