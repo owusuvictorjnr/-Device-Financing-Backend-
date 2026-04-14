@@ -5,38 +5,38 @@ import {
   IsEnum,
   IsInt,
   IsNumber,
-  IsOptional,
   IsPositive,
   Min,
+  ValidateIf,
 } from 'class-validator';
 
 export class UpdateLoanDto {
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsNumber()
   @IsPositive()
   principalAmount?: number;
 
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsNumber()
   @IsPositive()
   installmentAmount?: number;
 
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsInt()
   @Min(1)
   durationDays?: number;
 
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @Type(() => Date)
   @IsDate()
   startDate?: Date;
 
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsInt()
   @Min(0)
   gracePeriodDays?: number;
 
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsEnum(LoanStatus)
   status?: LoanStatus;
 }
