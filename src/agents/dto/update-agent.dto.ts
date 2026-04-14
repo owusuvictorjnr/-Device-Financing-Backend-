@@ -1,21 +1,15 @@
-import {
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Min,
-} from 'class-validator';
+import { IsNumber, IsString, IsUUID, Min, ValidateIf } from 'class-validator';
 
 export class UpdateAgentDto {
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsUUID()
   userId?: string;
 
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsString()
   region?: string;
 
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsNumber()
   @Min(0)
   commissionRate?: number;
