@@ -89,69 +89,76 @@ export class LoansService {
       );
     }
 
-    const existingOutstandingLoan = await this.prisma.loan.findFirst({
-      where: {
-        device_id: createLoanDto.deviceId,
-        status: {
-          not: LoanStatus.PAID,
-        },
-        deleted_at: null,
-      },
-      select: { id: true },
-    });
-
-    if (existingOutstandingLoan) {
-      throw new BadRequestException('Device already has an outstanding loan');
-    }
-
-    const dueDate = this.computeDueDate(
-      createLoanDto.startDate,
-      createLoanDto.durationDays,
-    );
-
     try {
-      const loan = await this.prisma.$transaction(async (tx) => {
-        if (!device.customer_id) {
-          const deviceAssignmentResult = await tx.device.updateMany({
-            where: {
-              id: device.id,
-              customer_id: null,
-              deleted_at: null,
-            },
-            data: {
-              customer_id: customer.id,
-            },
-          });
+      const loan = await this.prisma.$transaction(
+        async (tx) => {
+          const dueDate = this.computeDueDate(
+            createLoanDto.startDate,
+            createLoanDto.durationDays,
+          );
 
-          if (deviceAssignmentResult.count === 0) {
-            const latestDevice = await tx.device.findUnique({
-              where: { id: device.id },
-              select: { customer_id: true },
+          if (!device.customer_id) {
+            const deviceAssignmentResult = await tx.device.updateMany({
+              where: {
+                id: device.id,
+                customer_id: null,
+                deleted_at: null,
+              },
+              data: {
+                customer_id: customer.id,
+              },
             });
 
-            if (latestDevice?.customer_id !== customer.id) {
-              throw new BadRequestException(
-                'Device is assigned to a different customer',
-              );
+            if (deviceAssignmentResult.count === 0) {
+              const latestDevice = await tx.device.findUnique({
+                where: { id: device.id },
+                select: { customer_id: true },
+              });
+
+              if (latestDevice?.customer_id !== customer.id) {
+                throw new BadRequestException(
+                  'Device is assigned to a different customer',
+                );
+              }
             }
           }
-        }
 
-        return tx.loan.create({
-          data: {
-            customer_id: createLoanDto.customerId,
-            device_id: createLoanDto.deviceId,
-            agent_id: activeAgentUserId,
-            principal_amount: createLoanDto.principalAmount,
-            installment_amount: createLoanDto.installmentAmount,
-            duration_days: createLoanDto.durationDays,
-            start_date: createLoanDto.startDate,
-            due_date: dueDate,
-            grace_period_days: createLoanDto.gracePeriodDays ?? 0,
-            status: createLoanDto.status ?? LoanStatus.ACTIVE,
-          },
-        });
-      });
+          const existingOutstandingLoan = await tx.loan.findFirst({
+            where: {
+              device_id: createLoanDto.deviceId,
+              status: {
+                not: LoanStatus.PAID,
+              },
+              deleted_at: null,
+            },
+            select: { id: true },
+          });
+
+          if (existingOutstandingLoan) {
+            throw new BadRequestException(
+              'Device already has an outstanding loan',
+            );
+          }
+
+          return tx.loan.create({
+            data: {
+              customer_id: createLoanDto.customerId,
+              device_id: createLoanDto.deviceId,
+              agent_id: activeAgentUserId,
+              principal_amount: createLoanDto.principalAmount,
+              installment_amount: createLoanDto.installmentAmount,
+              duration_days: createLoanDto.durationDays,
+              start_date: createLoanDto.startDate,
+              due_date: dueDate,
+              grace_period_days: createLoanDto.gracePeriodDays ?? 0,
+              status: createLoanDto.status ?? LoanStatus.ACTIVE,
+            },
+          });
+        },
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        },
+      );
 
       return this.mapLoanToResponseDto(loan);
     } catch (error: unknown) {
@@ -439,18 +446,11 @@ export class LoansService {
     actor: AuthActor,
     createLoanDto: CreateLoanDto,
   ): Promise<string> {
-    const dtoWithAlias = createLoanDto as CreateLoanDto & {
-      agentUserId?: string;
-    };
+    const { agentUserId, agentId } = createLoanDto;
 
     const agentUserIdFromDto =
-      typeof dtoWithAlias.agentUserId === 'string'
-        ? dtoWithAlias.agentUserId
-        : undefined;
-    const agentIdFromDto =
-      typeof createLoanDto.agentId === 'string'
-        ? createLoanDto.agentId
-        : undefined;
+      typeof agentUserId === 'string' ? agentUserId : undefined;
+    const agentIdFromDto = typeof agentId === 'string' ? agentId : undefined;
     const requestedAgentUserId = agentUserIdFromDto ?? agentIdFromDto;
 
     if (
