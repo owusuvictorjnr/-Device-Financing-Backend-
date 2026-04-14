@@ -28,7 +28,11 @@ export class AgentsService {
         include: {
           _count: {
             select: {
-              customers: true,
+              customers: {
+                where: {
+                  deleted_at: null,
+                },
+              },
             },
           },
         },
@@ -51,7 +55,11 @@ export class AgentsService {
       include: {
         _count: {
           select: {
-            customers: true,
+            customers: {
+              where: {
+                deleted_at: null,
+              },
+            },
           },
         },
       },
@@ -66,7 +74,11 @@ export class AgentsService {
       include: {
         _count: {
           select: {
-            customers: true,
+            customers: {
+              where: {
+                deleted_at: null,
+              },
+            },
           },
         },
       },
@@ -124,7 +136,11 @@ export class AgentsService {
         include: {
           _count: {
             select: {
-              customers: true,
+              customers: {
+                where: {
+                  deleted_at: null,
+                },
+              },
             },
           },
         },
