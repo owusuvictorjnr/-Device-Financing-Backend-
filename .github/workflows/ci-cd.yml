@@ -34,6 +34,17 @@ jobs:
       - name: Run tests
         run: yarn test --passWithNoTests
 
+      - name: Create CI env file for Compose validation
+        run: |
+          cat > .env << 'EOF'
+          NODE_ENV=test
+          PORT=3000
+          JWT_SECRET=ci-placeholder-secret
+          DATABASE_URL=postgresql://postgres:postgres@postgres:5432/device_financing
+          REDIS_HOST=redis
+          REDIS_PORT=6379
+          EOF
+
       - name: Validate Docker Compose config
         env:
           API_HOST_PORT: "3001"
