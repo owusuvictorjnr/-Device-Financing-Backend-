@@ -1,19 +1,19 @@
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsString, IsUUID, ValidateIf } from 'class-validator';
 
 export class UpdateCustomerDto {
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsUUID()
   userId?: string;
 
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsUUID()
   agentId?: string;
 
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsString()
   nationalId?: string;
 
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsString()
   address?: string;
 }
