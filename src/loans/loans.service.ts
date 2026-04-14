@@ -190,17 +190,7 @@ export class LoansService {
       where.device_id = query.deviceId;
     }
 
-    const queryAgentUserId = query.agentUserId ?? query.agentId;
-
-    if (
-      query.agentUserId &&
-      query.agentId &&
-      query.agentUserId !== query.agentId
-    ) {
-      throw new BadRequestException(
-        'agentUserId and agentId must match when both are provided',
-      );
-    }
+    const queryAgentUserId = query.agentUserId;
 
     if (actor.role === UserRole.ADMIN) {
       if (query.customerId) {
@@ -446,22 +436,10 @@ export class LoansService {
     actor: AuthActor,
     createLoanDto: CreateLoanDto,
   ): Promise<string> {
-    const { agentUserId, agentId } = createLoanDto;
-
-    const agentUserIdFromDto =
-      typeof agentUserId === 'string' ? agentUserId : undefined;
-    const agentIdFromDto = typeof agentId === 'string' ? agentId : undefined;
-    const requestedAgentUserId = agentUserIdFromDto ?? agentIdFromDto;
-
-    if (
-      agentUserIdFromDto &&
-      agentIdFromDto &&
-      agentUserIdFromDto !== agentIdFromDto
-    ) {
-      throw new BadRequestException(
-        'agentUserId and agentId must match when both are provided',
-      );
-    }
+    const requestedAgentUserId =
+      typeof createLoanDto.agentUserId === 'string'
+        ? createLoanDto.agentUserId
+        : undefined;
 
     if (actor.role === UserRole.AGENT) {
       if (requestedAgentUserId && requestedAgentUserId !== actor.id) {
@@ -530,7 +508,7 @@ export class LoansService {
       id: loan.id,
       customerId: loan.customer_id,
       deviceId: loan.device_id,
-      agentId: loan.agent_id,
+      agentUserId: loan.agent_id,
       principalAmount: loan.principal_amount.toString(),
       installmentAmount: loan.installment_amount.toString(),
       durationDays: loan.duration_days,
