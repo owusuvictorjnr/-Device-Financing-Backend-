@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { CustomersService } from './customers.service';
 import { PrismaService } from '../database/prisma.service';
@@ -19,6 +23,7 @@ describe('CustomersService', () => {
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
   };
 
@@ -204,33 +209,51 @@ describe('CustomersService', () => {
   });
 
   it('soft-deletes customer and returns success message', async () => {
-    type DeleteUpdateArgs = {
-      where: { id: string };
+    type DeleteUpdateManyArgs = {
+      where: { id: string; deleted_at: null };
       data: { deleted_at: Date };
     };
 
-    let capturedUpdateArgs: DeleteUpdateArgs | undefined;
+    let capturedUpdateArgs: DeleteUpdateManyArgs | undefined;
 
     prismaMock.customer.findUnique.mockResolvedValue(customerRecord);
-    prismaMock.customer.update.mockImplementation((args: DeleteUpdateArgs) => {
-      capturedUpdateArgs = args;
+    prismaMock.customer.updateMany.mockImplementation(
+      (args: DeleteUpdateManyArgs) => {
+        capturedUpdateArgs = args;
 
-      return {
-        ...customerRecord,
-        deleted_at: new Date(),
-      };
-    });
+        return {
+          count: 1,
+        };
+      },
+    );
 
     const result = await service.delete('customer-1', {
       id: 'admin-1',
       role: UserRole.ADMIN,
     });
 
-    expect(prismaMock.customer.update).toHaveBeenCalledTimes(1);
+    expect(prismaMock.customer.updateMany).toHaveBeenCalledTimes(1);
     expect(capturedUpdateArgs).toBeDefined();
-    expect(capturedUpdateArgs?.where).toEqual({ id: 'customer-1' });
+    expect(capturedUpdateArgs?.where).toEqual({
+      id: 'customer-1',
+      deleted_at: null,
+    });
     expect(capturedUpdateArgs?.data.deleted_at).toBeInstanceOf(Date);
     expect(result).toEqual({ message: 'Customer customer-1 has been deleted' });
+  });
+
+  it('throws not found when delete updateMany affects zero rows', async () => {
+    prismaMock.customer.findUnique.mockResolvedValue(customerRecord);
+    prismaMock.customer.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(
+      service.delete('customer-1', {
+        id: 'admin-1',
+        role: UserRole.ADMIN,
+      }),
+    ).rejects.toThrow(
+      new NotFoundException('Customer with ID customer-1 not found'),
+    );
   });
 
   it('denies findOne when AGENT tries to access another agent customer', async () => {
