@@ -111,6 +111,35 @@ describe('DevicesService', () => {
     });
   });
 
+  it('allows AGENT to create unassigned devices (inventory)', async () => {
+    const unassignedDeviceRecord = { ...deviceRecord, customer_id: null };
+    prismaMock.device.create.mockResolvedValue(unassignedDeviceRecord);
+
+    const result = await service.create(
+      {
+        serialNumber: 'SN-002',
+        deviceType: DeviceType.TV,
+        platform: DevicePlatform.IOT,
+        model: 'Model Y',
+        // customerId intentionally omitted
+      },
+      { id: 'agent-user-1', role: UserRole.AGENT },
+    );
+
+    expect(prismaMock.device.create).toHaveBeenCalledWith({
+      data: {
+        serial_number: 'SN-002',
+        device_type: DeviceType.TV,
+        platform: DevicePlatform.IOT,
+        model: 'Model Y',
+        status: DeviceStatus.ACTIVE,
+        customer_id: null,
+        last_seen: null,
+      },
+    });
+    expect(result.customerId).toBeNull();
+  });
+
   it('rejects AGENT create requests for customers outside their portfolio', async () => {
     prismaMock.customer.findFirst.mockResolvedValue({
       id: 'customer-1',
@@ -132,6 +161,34 @@ describe('DevicesService', () => {
     ).rejects.toThrow(ForbiddenException);
   });
 
+  it('allows AGENT to view both assigned devices and unassigned inventory', async () => {
+    prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-1' });
+    prismaMock.device.findMany.mockResolvedValue([deviceRecord]);
+
+    await service.findAll(
+      { skip: 0, take: 10 },
+      { id: 'agent-user-1', role: UserRole.AGENT },
+    );
+
+    expect(prismaMock.device.findMany).toHaveBeenCalledWith({
+      where: {
+        deleted_at: null,
+        OR: [
+          { customer_id: null },
+          {
+            customer: {
+              deleted_at: null,
+              agent_id: 'agent-1',
+            },
+          },
+        ],
+      },
+      skip: 0,
+      take: 10,
+      orderBy: { created_at: 'desc' },
+    });
+  });
+
   it('scopes customer visibility to their own devices', async () => {
     prismaMock.customer.findFirst.mockResolvedValue({ id: 'customer-1' });
     prismaMock.device.findMany.mockResolvedValue([deviceRecord]);
@@ -150,6 +207,19 @@ describe('DevicesService', () => {
       take: 10,
       orderBy: { created_at: 'desc' },
     });
+  });
+
+  it('allows AGENT to access unassigned devices (inventory)', async () => {
+    const unassignedDevice = { ...deviceRecord, customer_id: null };
+    prismaMock.device.findUnique.mockResolvedValue(unassignedDevice);
+    prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-1' });
+
+    const result = await service.findOne('device-1', {
+      id: 'agent-user-1',
+      role: UserRole.AGENT,
+    });
+
+    expect(result.customerId).toBeNull();
   });
 
   it('rejects device lookup when the customer does not own it', async () => {
