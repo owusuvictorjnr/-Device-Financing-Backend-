@@ -49,6 +49,8 @@ export class DevicesService {
     createDeviceDto: CreateDeviceDto,
     actor: AuthActor,
   ): Promise<DeviceResponseDto> {
+    let actorAgentId: string | undefined;
+
     // Explicit role validation for defense-in-depth
     if (actor.role === UserRole.CUSTOMER) {
       throw new ForbiddenException('Customers cannot create devices');
@@ -56,12 +58,13 @@ export class DevicesService {
 
     // For AGENT, validate active agent record exists regardless of customer assignment
     if (actor.role === UserRole.AGENT) {
-      await this.getActiveAgentByUserId(actor.id);
+      actorAgentId = (await this.getActiveAgentByUserId(actor.id)).id;
     }
 
     const customerId = await this.resolveTargetCustomerId(
       actor,
       createDeviceDto.customerId,
+      actorAgentId,
     );
 
     try {
@@ -180,6 +183,10 @@ export class DevicesService {
     updateDeviceDto: UpdateDeviceDto,
     actor: AuthActor,
   ): Promise<DeviceResponseDto> {
+    if (actor.role === UserRole.CUSTOMER) {
+      throw new ForbiddenException('Customers cannot update devices');
+    }
+
     const device = await this.getDeviceById(id);
     await this.assertDeviceAccess(device, actor);
 
@@ -229,6 +236,10 @@ export class DevicesService {
   }
 
   async delete(id: string, actor: AuthActor): Promise<{ message: string }> {
+    if (actor.role === UserRole.CUSTOMER) {
+      throw new ForbiddenException('Customers cannot delete devices');
+    }
+
     const device = await this.getDeviceById(id);
     await this.assertDeviceAccess(device, actor);
 
@@ -321,6 +332,7 @@ export class DevicesService {
   private async resolveTargetCustomerId(
     actor: AuthActor,
     requestedCustomerId: string | null | undefined,
+    actorAgentId?: string,
   ): Promise<string | undefined> {
     // If explicitly set to null, unassign the device
     if (requestedCustomerId === null) {
@@ -338,9 +350,10 @@ export class DevicesService {
     }
 
     if (actor.role === UserRole.AGENT) {
-      const agent = await this.getActiveAgentByUserId(actor.id);
+      const resolvedAgentId =
+        actorAgentId ?? (await this.getActiveAgentByUserId(actor.id)).id;
 
-      if (customer.agent_id !== agent.id) {
+      if (customer.agent_id !== resolvedAgentId) {
         throw new ForbiddenException(
           'Agents can only assign devices to their customers',
         );
