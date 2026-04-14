@@ -29,33 +29,11 @@ type AuthActor = {
   role: UserRole;
 };
 
-type LoansServiceContract = {
-  create(
-    createLoanDto: CreateLoanDto,
-    actor: AuthActor,
-  ): Promise<LoanResponseDto>;
-  findAll(
-    query: FindAllLoansQueryDto,
-    actor: AuthActor,
-  ): Promise<LoanResponseDto[]>;
-  findOne(id: string, actor: AuthActor): Promise<LoanResponseDto>;
-  update(
-    id: string,
-    updateLoanDto: UpdateLoanDto,
-    actor: AuthActor,
-  ): Promise<LoanResponseDto>;
-  delete(id: string, actor: AuthActor): Promise<{ message: string }>;
-};
-
 @ApiTags('loans')
 @Controller('loans')
 @UseGuards(JwtGuard, RolesGuard)
 export class LoansController {
-  private readonly loansService: LoansServiceContract;
-
-  constructor(loansService: LoansService) {
-    this.loansService = loansService as unknown as LoansServiceContract;
-  }
+  constructor(private readonly loansService: LoansService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new loan' })
