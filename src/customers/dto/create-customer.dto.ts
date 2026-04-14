@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateCustomerDto {
@@ -6,6 +7,11 @@ export class CreateCustomerDto {
 
   @IsOptional()
   @IsUUID()
+  @ApiPropertyOptional({
+    description:
+      'Required for ADMIN requests. Ignored for AGENT requests, where the authenticated agent is used automatically.',
+    format: 'uuid',
+  })
   agentId?: string;
 
   @IsString()
