@@ -113,6 +113,7 @@ describe('DevicesService', () => {
 
   it('allows AGENT to create unassigned devices (inventory)', async () => {
     const unassignedDeviceRecord = { ...deviceRecord, customer_id: null };
+    prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-1' });
     prismaMock.device.create.mockResolvedValue(unassignedDeviceRecord);
 
     const result = await service.create(
@@ -126,6 +127,13 @@ describe('DevicesService', () => {
       { id: 'agent-user-1', role: UserRole.AGENT },
     );
 
+    expect(prismaMock.agent.findFirst).toHaveBeenCalledWith({
+      where: {
+        user_id: 'agent-user-1',
+        deleted_at: null,
+      },
+      select: { id: true },
+    });
     expect(prismaMock.device.create).toHaveBeenCalledWith({
       data: {
         serial_number: 'SN-002',
@@ -155,6 +163,36 @@ describe('DevicesService', () => {
           platform: DevicePlatform.IOT,
           model: 'Model Y',
           customerId: 'customer-1',
+        },
+        { id: 'agent-user-1', role: UserRole.AGENT },
+      ),
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('rejects CUSTOMER from creating devices', async () => {
+    await expect(
+      service.create(
+        {
+          serialNumber: 'SN-001',
+          deviceType: DeviceType.ANDROID_PHONE,
+          platform: DevicePlatform.ANDROID,
+          model: 'Model X',
+        },
+        { id: 'customer-user-1', role: UserRole.CUSTOMER },
+      ),
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('rejects AGENT without active Agent record from creating devices', async () => {
+    prismaMock.agent.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.create(
+        {
+          serialNumber: 'SN-001',
+          deviceType: DeviceType.ANDROID_PHONE,
+          platform: DevicePlatform.ANDROID,
+          model: 'Model X',
         },
         { id: 'agent-user-1', role: UserRole.AGENT },
       ),
@@ -290,6 +328,113 @@ describe('DevicesService', () => {
           platform: DevicePlatform.ANDROID,
           model: 'Model X',
         },
+        { id: 'admin-1', role: UserRole.ADMIN },
+      ),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('updates device fields for admin', async () => {
+    const updatedRecord = { ...deviceRecord, model: 'Model Z' };
+    prismaMock.device.findUnique.mockResolvedValue(deviceRecord);
+    prismaMock.device.update.mockResolvedValue(updatedRecord);
+
+    const result = await service.update(
+      'device-1',
+      { model: 'Model Z' },
+      { id: 'admin-1', role: UserRole.ADMIN },
+    );
+
+    expect(prismaMock.device.update).toHaveBeenCalledWith({
+      where: { id: 'device-1' },
+      data: { model: 'Model Z' },
+    });
+    expect(result.model).toBe('Model Z');
+  });
+
+  it('allows AGENT to unassign a device (customer_id: null)', async () => {
+    prismaMock.device.findUnique.mockResolvedValue(deviceRecord);
+    prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-1' });
+    prismaMock.customer.findFirst.mockResolvedValue({
+      id: 'customer-1',
+      agent_id: 'agent-1',
+    });
+
+    const unassignedRecord = { ...deviceRecord, customer_id: null };
+    prismaMock.device.update.mockResolvedValue(unassignedRecord);
+
+    const result = await service.update(
+      'device-1',
+      { customerId: null },
+      { id: 'agent-user-1', role: UserRole.AGENT },
+    );
+
+    expect(prismaMock.device.update).toHaveBeenCalledWith({
+      where: { id: 'device-1' },
+      data: { customer_id: null },
+    });
+    expect(result.customerId).toBeNull();
+  });
+
+  it('forbids AGENT reassignment to customer outside portfolio', async () => {
+    prismaMock.device.findUnique.mockResolvedValue(deviceRecord);
+    prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-1' });
+    prismaMock.customer.findFirst.mockResolvedValue({
+      id: 'customer-2',
+      agent_id: 'agent-2',
+    });
+
+    await expect(
+      service.update(
+        'device-1',
+        { customerId: 'customer-2' },
+        { id: 'agent-user-1', role: UserRole.AGENT },
+      ),
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('forbids AGENT from accessing device owned by another agent', async () => {
+    prismaMock.device.findUnique.mockResolvedValue({
+      ...deviceRecord,
+      customer_id: 'customer-2',
+    });
+    prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-1' });
+    prismaMock.customer.findFirst.mockResolvedValueOnce({
+      id: 'customer-2',
+      agent_id: 'agent-2',
+    });
+
+    await expect(
+      service.update(
+        'device-1',
+        { status: DeviceStatus.INACTIVE },
+        { id: 'agent-user-1', role: UserRole.AGENT },
+      ),
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('throws not found when device does not exist during update', async () => {
+    prismaMock.device.findUnique.mockResolvedValue(null);
+
+    await expect(
+      service.update(
+        'nonexistent-device',
+        { model: 'New Model' },
+        { id: 'admin-1', role: UserRole.ADMIN },
+      ),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('maps unique constraint error to bad request during update', async () => {
+    prismaMock.device.findUnique.mockResolvedValue(deviceRecord);
+    prismaMock.device.update.mockRejectedValue({
+      code: 'P2002',
+      meta: { target: ['serial_number'] },
+    });
+
+    await expect(
+      service.update(
+        'device-1',
+        { serialNumber: 'SN-DUPLICATE' },
         { id: 'admin-1', role: UserRole.ADMIN },
       ),
     ).rejects.toThrow(BadRequestException);
