@@ -54,7 +54,7 @@ jobs:
         env:
           API_HOST_PORT: "3001"
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: ${{ github.run_id }}
+          POSTGRES_PASSWORD: ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
           POSTGRES_DB: device_financing
           POSTGRES_HOST_PORT: "5433"
         run: docker compose config > /dev/null
