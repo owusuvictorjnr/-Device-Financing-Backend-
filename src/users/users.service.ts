@@ -5,6 +5,10 @@ import {
 } from '@nestjs/common';
 import { hash } from 'bcrypt';
 import type { User } from '@prisma/client';
+import {
+  getPrismaUniqueConstraintTarget,
+  isPrismaErrorCode,
+} from '../common/prisma/prisma-error.utils';
 import { PrismaService } from '../database/prisma.service';
 import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto';
 import { mapUserToResponseDto } from './mappers/user-response.mapper';
@@ -147,11 +151,11 @@ export class UsersService {
   }
 
   private handleUniqueConstraintError(error: unknown): void {
-    if (!this.isPrismaUniqueConstraintError(error)) {
+    if (!isPrismaErrorCode(error, 'P2002')) {
       return;
     }
 
-    const target = this.getUniqueConstraintTarget(error);
+    const target = getPrismaUniqueConstraintTarget(error);
 
     if (target.includes('email')) {
       throw new BadRequestException('Email already in use');
@@ -164,50 +168,11 @@ export class UsersService {
     throw new BadRequestException('User with provided details already exists');
   }
 
-  private isPrismaUniqueConstraintError(error: unknown): boolean {
-    if (!error || typeof error !== 'object') {
-      return false;
-    }
-
-    return (error as { code?: unknown }).code === 'P2002';
-  }
-
   private handleRecordNotFoundError(error: unknown, id: string): void {
-    if (!this.isPrismaRecordNotFoundError(error)) {
+    if (!isPrismaErrorCode(error, 'P2025')) {
       return;
     }
 
     throw new NotFoundException(`User with ID ${id} not found`);
-  }
-
-  private isPrismaRecordNotFoundError(error: unknown): boolean {
-    if (!error || typeof error !== 'object') {
-      return false;
-    }
-
-    return (error as { code?: unknown }).code === 'P2025';
-  }
-
-  private getUniqueConstraintTarget(error: unknown): string[] {
-    if (!error || typeof error !== 'object') {
-      return [];
-    }
-
-    const meta = (error as { meta?: unknown }).meta;
-    if (!meta || typeof meta !== 'object') {
-      return [];
-    }
-
-    const target = (meta as { target?: unknown }).target;
-
-    if (typeof target === 'string') {
-      return [target];
-    }
-
-    if (Array.isArray(target)) {
-      return target.filter((item): item is string => typeof item === 'string');
-    }
-
-    return [];
   }
 }
