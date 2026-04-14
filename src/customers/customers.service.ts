@@ -5,6 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
+import {
+  getPrismaUniqueConstraintTarget,
+  isPrismaErrorCode,
+} from '../common/prisma/prisma-error.utils';
 import { PrismaService } from '../database/prisma.service';
 import {
   CreateCustomerDto,
@@ -272,11 +276,11 @@ export class CustomersService {
   }
 
   private handleUniqueConstraintError(error: unknown): void {
-    if (!this.isPrismaError(error, 'P2002')) {
+    if (!isPrismaErrorCode(error, 'P2002')) {
       return;
     }
 
-    const target = this.getUniqueConstraintTarget(error);
+    const target = getPrismaUniqueConstraintTarget(error);
 
     if (target.includes('user_id')) {
       throw new BadRequestException('User already has a customer profile');
@@ -292,7 +296,7 @@ export class CustomersService {
   }
 
   private handleRecordNotFoundError(error: unknown, id: string): void {
-    if (!this.isPrismaError(error, 'P2025')) {
+    if (!isPrismaErrorCode(error, 'P2025')) {
       return;
     }
 
@@ -300,42 +304,10 @@ export class CustomersService {
   }
 
   private handleRelatedRecordNotFoundError(error: unknown): void {
-    if (!this.isPrismaError(error, 'P2003')) {
+    if (!isPrismaErrorCode(error, 'P2003')) {
       return;
     }
 
     throw new BadRequestException('Referenced user or agent does not exist');
-  }
-
-  private isPrismaError(error: unknown, code: string): boolean {
-    if (!error || typeof error !== 'object') {
-      return false;
-    }
-
-    return (error as { code?: unknown }).code === code;
-  }
-
-  private getUniqueConstraintTarget(error: unknown): string[] {
-    if (!error || typeof error !== 'object') {
-      return [];
-    }
-
-    const meta = (error as { meta?: unknown }).meta;
-
-    if (!meta || typeof meta !== 'object') {
-      return [];
-    }
-
-    const target = (meta as { target?: unknown }).target;
-
-    if (typeof target === 'string') {
-      return [target];
-    }
-
-    if (Array.isArray(target)) {
-      return target.filter((item): item is string => typeof item === 'string');
-    }
-
-    return [];
   }
 }
