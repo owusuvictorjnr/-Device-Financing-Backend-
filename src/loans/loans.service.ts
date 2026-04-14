@@ -60,7 +60,6 @@ export class LoansService {
     const activeAgentUserId = await this.resolveLoanAgentUserId(
       actor,
       createLoanDto,
-      actorAgentProfileId,
     );
     const customer = await this.getActiveCustomerById(createLoanDto.customerId);
     const device = await this.getActiveDeviceById(createLoanDto.deviceId);
@@ -73,23 +72,36 @@ export class LoansService {
       }
     }
 
+    if (actor.role === UserRole.ADMIN) {
+      const selectedAgentProfile =
+        await this.getActiveAgentProfileByUserId(activeAgentUserId);
+
+      if (customer.agent_id !== selectedAgentProfile.id) {
+        throw new BadRequestException(
+          'Selected agent is not assigned to this customer',
+        );
+      }
+    }
+
     if (device.customer_id && device.customer_id !== customer.id) {
       throw new BadRequestException(
         'Device is assigned to a different customer',
       );
     }
 
-    const existingActiveLoan = await this.prisma.loan.findFirst({
+    const existingOutstandingLoan = await this.prisma.loan.findFirst({
       where: {
         device_id: createLoanDto.deviceId,
-        status: LoanStatus.ACTIVE,
+        status: {
+          not: LoanStatus.PAID,
+        },
         deleted_at: null,
       },
       select: { id: true },
     });
 
-    if (existingActiveLoan) {
-      throw new BadRequestException('Device already has an active loan');
+    if (existingOutstandingLoan) {
+      throw new BadRequestException('Device already has an outstanding loan');
     }
 
     const dueDate = this.computeDueDate(
@@ -98,19 +110,47 @@ export class LoansService {
     );
 
     try {
-      const loan = await this.prisma.loan.create({
-        data: {
-          customer_id: createLoanDto.customerId,
-          device_id: createLoanDto.deviceId,
-          agent_id: activeAgentUserId,
-          principal_amount: createLoanDto.principalAmount,
-          installment_amount: createLoanDto.installmentAmount,
-          duration_days: createLoanDto.durationDays,
-          start_date: createLoanDto.startDate,
-          due_date: dueDate,
-          grace_period_days: createLoanDto.gracePeriodDays ?? 0,
-          status: createLoanDto.status ?? LoanStatus.ACTIVE,
-        },
+      const loan = await this.prisma.$transaction(async (tx) => {
+        if (!device.customer_id) {
+          const deviceAssignmentResult = await tx.device.updateMany({
+            where: {
+              id: device.id,
+              customer_id: null,
+              deleted_at: null,
+            },
+            data: {
+              customer_id: customer.id,
+            },
+          });
+
+          if (deviceAssignmentResult.count === 0) {
+            const latestDevice = await tx.device.findUnique({
+              where: { id: device.id },
+              select: { customer_id: true },
+            });
+
+            if (latestDevice?.customer_id !== customer.id) {
+              throw new BadRequestException(
+                'Device is assigned to a different customer',
+              );
+            }
+          }
+        }
+
+        return tx.loan.create({
+          data: {
+            customer_id: createLoanDto.customerId,
+            device_id: createLoanDto.deviceId,
+            agent_id: activeAgentUserId,
+            principal_amount: createLoanDto.principalAmount,
+            installment_amount: createLoanDto.installmentAmount,
+            duration_days: createLoanDto.durationDays,
+            start_date: createLoanDto.startDate,
+            due_date: dueDate,
+            grace_period_days: createLoanDto.gracePeriodDays ?? 0,
+            status: createLoanDto.status ?? LoanStatus.ACTIVE,
+          },
+        });
       });
 
       return this.mapLoanToResponseDto(loan);
@@ -143,17 +183,29 @@ export class LoansService {
       where.device_id = query.deviceId;
     }
 
+    const queryAgentUserId = query.agentUserId ?? query.agentId;
+
+    if (
+      query.agentUserId &&
+      query.agentId &&
+      query.agentUserId !== query.agentId
+    ) {
+      throw new BadRequestException(
+        'agentUserId and agentId must match when both are provided',
+      );
+    }
+
     if (actor.role === UserRole.ADMIN) {
       if (query.customerId) {
         where.customer_id = query.customerId;
       }
-      if (query.agentId) {
-        where.agent_id = query.agentId;
+      if (queryAgentUserId) {
+        where.agent_id = queryAgentUserId;
       }
     } else if (actor.role === UserRole.AGENT) {
       where.agent_id = actor.id;
 
-      if (query.agentId && query.agentId !== actor.id) {
+      if (queryAgentUserId && queryAgentUserId !== actor.id) {
         throw new ForbiddenException('Agents can only access their own loans');
       }
 
@@ -386,29 +438,49 @@ export class LoansService {
   private async resolveLoanAgentUserId(
     actor: AuthActor,
     createLoanDto: CreateLoanDto,
-    actorAgentProfileId?: string,
   ): Promise<string> {
+    const dtoWithAlias = createLoanDto as CreateLoanDto & {
+      agentUserId?: string;
+    };
+
+    const agentUserIdFromDto =
+      typeof dtoWithAlias.agentUserId === 'string'
+        ? dtoWithAlias.agentUserId
+        : undefined;
+    const agentIdFromDto =
+      typeof createLoanDto.agentId === 'string'
+        ? createLoanDto.agentId
+        : undefined;
+    const requestedAgentUserId = agentUserIdFromDto ?? agentIdFromDto;
+
+    if (
+      agentUserIdFromDto &&
+      agentIdFromDto &&
+      agentUserIdFromDto !== agentIdFromDto
+    ) {
+      throw new BadRequestException(
+        'agentUserId and agentId must match when both are provided',
+      );
+    }
+
     if (actor.role === UserRole.AGENT) {
-      if (createLoanDto.agentId && createLoanDto.agentId !== actor.id) {
+      if (requestedAgentUserId && requestedAgentUserId !== actor.id) {
         throw new ForbiddenException(
           'Agents can only create loans for themselves',
         );
       }
 
-      if (!actorAgentProfileId) {
-        await this.getActiveAgentProfileByUserId(actor.id);
-      }
       return actor.id;
     }
 
     if (actor.role === UserRole.ADMIN) {
-      if (!createLoanDto.agentId) {
+      if (!requestedAgentUserId) {
         throw new BadRequestException(
-          'agentId is required when an admin creates a loan',
+          'agentUserId is required when an admin creates a loan',
         );
       }
 
-      return (await this.getActiveAgentUserById(createLoanDto.agentId)).id;
+      return (await this.getActiveAgentUserById(requestedAgentUserId)).id;
     }
 
     throw new ForbiddenException('Customers cannot create loans');
@@ -432,7 +504,14 @@ export class LoansService {
     }
 
     if (actor.role === UserRole.AGENT) {
-      await this.getActiveAgentProfileByUserId(actor.id);
+      const agentProfile = await this.getActiveAgentProfileByUserId(actor.id);
+      const customer = await this.getActiveCustomerById(loan.customer_id);
+
+      if (customer.agent_id !== agentProfile.id) {
+        throw new ForbiddenException(
+          'Agents can only access loans for their own customers',
+        );
+      }
 
       if (loan.agent_id !== actor.id) {
         throw new ForbiddenException('Agents can only access their own loans');
@@ -452,8 +531,8 @@ export class LoansService {
       customerId: loan.customer_id,
       deviceId: loan.device_id,
       agentId: loan.agent_id,
-      principalAmount: Number(loan.principal_amount),
-      installmentAmount: Number(loan.installment_amount),
+      principalAmount: loan.principal_amount.toString(),
+      installmentAmount: loan.installment_amount.toString(),
       durationDays: loan.duration_days,
       startDate: loan.start_date,
       dueDate: loan.due_date,
