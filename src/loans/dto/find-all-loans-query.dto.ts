@@ -53,6 +53,16 @@ export class FindAllLoansQueryDto {
   })
   @IsOptional()
   @IsUUID()
+  agentUserId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Deprecated alias for agentUserId',
+    format: 'uuid',
+    required: false,
+    deprecated: true,
+  })
+  @IsOptional()
+  @IsUUID()
   agentId?: string;
 
   @ApiPropertyOptional({
