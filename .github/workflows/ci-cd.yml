@@ -8,6 +8,7 @@ on:
 
 env:
   NODE_VERSION: 20
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
@@ -15,10 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -33,3 +34,27 @@ jobs:
 
       - name: Run tests
         run: yarn test --passWithNoTests
+
+      - name: Create CI env file for Compose validation
+        env:
+          CI_DYNAMIC_SECRET: ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
+          POSTGRES_USER: postgres
+          POSTGRES_DB: device_financing
+        run: |
+          cat > .env << EOF
+          NODE_ENV=test
+          PORT=3000
+          JWT_SECRET=${CI_DYNAMIC_SECRET}
+          DATABASE_URL=postgresql://${POSTGRES_USER}:${CI_DYNAMIC_SECRET}@postgres:5432/${POSTGRES_DB}
+          REDIS_HOST=redis
+          REDIS_PORT=6379
+          EOF
+
+      - name: Validate Docker Compose config
+        env:
+          API_HOST_PORT: "3001"
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
+          POSTGRES_DB: device_financing
+          POSTGRES_HOST_PORT: "5433"
+        run: docker compose config > /dev/null

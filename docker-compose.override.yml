@@ -1,0 +1,12 @@
+services:
+  api:
+    command: yarn start:dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  worker:
+    command: yarn worker
+    volumes:
+      - .:/app
+      - /app/node_modules
