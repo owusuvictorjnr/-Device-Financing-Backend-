@@ -68,7 +68,11 @@ describe('LoansController', () => {
 
   it('rejects missing authenticated user context', () => {
     expect(() =>
-      (controller as unknown as { getActor: (id: string, role: UserRole) => unknown }).getActor('', UserRole.ADMIN),
+      (
+        controller as unknown as {
+          getActor: (id: string, role: UserRole) => unknown;
+        }
+      ).getActor('', UserRole.ADMIN),
     ).toThrow(ForbiddenException);
   });
 });
