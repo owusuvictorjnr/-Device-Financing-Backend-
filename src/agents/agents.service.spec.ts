@@ -15,6 +15,7 @@ describe('AgentsService', () => {
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
   };
 
@@ -195,28 +196,36 @@ describe('AgentsService', () => {
   });
 
   it('soft deletes an agent and returns confirmation message', async () => {
-    type DeleteUpdateArgs = {
-      where: { id: string };
+    type DeleteUpdateManyArgs = {
+      where: { id: string; deleted_at: null };
       data: { deleted_at: Date };
     };
 
-    let capturedArgs: DeleteUpdateArgs | undefined;
+    let capturedArgs: DeleteUpdateManyArgs | undefined;
 
-    prismaMock.agent.findUnique.mockResolvedValue(agentRecord);
-    prismaMock.agent.update.mockImplementation((args: DeleteUpdateArgs) => {
-      capturedArgs = args;
+    prismaMock.agent.updateMany.mockImplementation(
+      (args: DeleteUpdateManyArgs) => {
+        capturedArgs = args;
 
-      return {
-        ...agentRecord,
-        deleted_at: new Date(),
-      };
-    });
+        return {
+          count: 1,
+        };
+      },
+    );
 
     const result = await service.delete('agent-1');
 
-    expect(prismaMock.agent.update).toHaveBeenCalledTimes(1);
-    expect(capturedArgs?.where).toEqual({ id: 'agent-1' });
+    expect(prismaMock.agent.updateMany).toHaveBeenCalledTimes(1);
+    expect(capturedArgs?.where).toEqual({ id: 'agent-1', deleted_at: null });
     expect(capturedArgs?.data.deleted_at).toBeInstanceOf(Date);
     expect(result).toEqual({ message: 'Agent agent-1 has been deleted' });
+  });
+
+  it('throws not found when delete updateMany affects zero rows', async () => {
+    prismaMock.agent.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(service.delete('missing-agent')).rejects.toThrow(
+      new NotFoundException('Agent with ID missing-agent not found'),
+    );
   });
 });
