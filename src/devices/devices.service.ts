@@ -85,6 +85,17 @@ export class DevicesService {
       status?: DeviceStatus;
       device_type?: DeviceType;
       platform?: DevicePlatform;
+      OR?: Array<
+        | {
+            customer_id: null;
+          }
+        | {
+            customer: {
+              deleted_at: null;
+              agent_id: string;
+            };
+          }
+      >;
       customer?: {
         deleted_at: null;
         agent_id?: string;
@@ -116,10 +127,16 @@ export class DevicesService {
         await this.assertCustomerBelongsToAgent(query.customerId, agent.id);
         where.customer_id = query.customerId;
       } else {
-        where.customer = {
-          deleted_at: null,
-          agent_id: agent.id,
-        };
+        // Show devices either unassigned or assigned to agent's customers
+        where.OR = [
+          { customer_id: null },
+          {
+            customer: {
+              deleted_at: null,
+              agent_id: agent.id,
+            },
+          },
+        ];
       }
     } else {
       const customer = await this.getActiveCustomerByUserId(actor.id);
@@ -293,8 +310,13 @@ export class DevicesService {
 
   private async resolveTargetCustomerId(
     actor: AuthActor,
-    requestedCustomerId: string | undefined,
+    requestedCustomerId: string | null | undefined,
   ): Promise<string | undefined> {
+    // If explicitly set to null, unassign the device
+    if (requestedCustomerId === null) {
+      return undefined;
+    }
+
     if (!requestedCustomerId) {
       return undefined;
     }
@@ -344,13 +366,10 @@ export class DevicesService {
     if (actor.role === UserRole.AGENT) {
       const agent = await this.getActiveAgentByUserId(actor.id);
 
-      if (!device.customer_id) {
-        throw new ForbiddenException(
-          'Agents can only access devices assigned to their customers',
-        );
+      // Allow access to unassigned devices (inventory) or assigned to agent's customers
+      if (device.customer_id) {
+        await this.assertCustomerBelongsToAgent(device.customer_id, agent.id);
       }
-
-      await this.assertCustomerBelongsToAgent(device.customer_id, agent.id);
       return;
     }
 
