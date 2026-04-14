@@ -149,6 +149,37 @@ describe('LoansService', () => {
     ).rejects.toThrow(ForbiddenException);
   });
 
+  it('uses a single agent profile lookup for AGENT create', async () => {
+    prismaMock.agent.findFirst.mockResolvedValue({
+      id: 'agent-profile-1',
+      user_id: 'agent-user-1',
+    });
+    prismaMock.customer.findFirst.mockResolvedValue({
+      id: 'customer-1',
+      agent_id: 'agent-profile-1',
+    });
+    prismaMock.device.findFirst.mockResolvedValue({
+      id: 'device-1',
+      customer_id: 'customer-1',
+    });
+    prismaMock.loan.findFirst.mockResolvedValue(null);
+    prismaMock.loan.create.mockResolvedValue(loanRecord);
+
+    await service.create(
+      {
+        customerId: 'customer-1',
+        deviceId: 'device-1',
+        principalAmount: 1000,
+        installmentAmount: 100,
+        durationDays: 10,
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+      },
+      { id: 'agent-user-1', role: UserRole.AGENT },
+    );
+
+    expect(prismaMock.agent.findFirst).toHaveBeenCalledTimes(1);
+  });
+
   it('scopes CUSTOMER visibility to own loans', async () => {
     prismaMock.customer.findFirst.mockResolvedValue({ id: 'customer-1' });
     prismaMock.loan.findMany.mockResolvedValue([loanRecord]);
@@ -236,5 +267,17 @@ describe('LoansService', () => {
     await expect(
       service.findOne('loan-unknown', { id: 'admin-1', role: UserRole.ADMIN }),
     ).rejects.toThrow(NotFoundException);
+  });
+
+  it('rejects AGENT access when agent profile is not active', async () => {
+    prismaMock.loan.findUnique.mockResolvedValue(loanRecord);
+    prismaMock.agent.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.findOne('loan-1', {
+        id: 'agent-user-1',
+        role: UserRole.AGENT,
+      }),
+    ).rejects.toThrow(ForbiddenException);
   });
 });
