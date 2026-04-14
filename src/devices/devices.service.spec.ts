@@ -169,6 +169,28 @@ describe('DevicesService', () => {
     ).rejects.toThrow(ForbiddenException);
   });
 
+  it('uses a single agent lookup when AGENT creates with customer assignment', async () => {
+    prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-1' });
+    prismaMock.customer.findFirst.mockResolvedValue({
+      id: 'customer-1',
+      agent_id: 'agent-1',
+    });
+    prismaMock.device.create.mockResolvedValue(deviceRecord);
+
+    await service.create(
+      {
+        serialNumber: 'SN-003',
+        deviceType: DeviceType.ANDROID_PHONE,
+        platform: DevicePlatform.ANDROID,
+        model: 'Model Q',
+        customerId: 'customer-1',
+      },
+      { id: 'agent-user-1', role: UserRole.AGENT },
+    );
+
+    expect(prismaMock.agent.findFirst).toHaveBeenCalledTimes(1);
+  });
+
   it('rejects CUSTOMER from creating devices', async () => {
     await expect(
       service.create(
@@ -314,6 +336,17 @@ describe('DevicesService', () => {
     ).rejects.toThrow(NotFoundException);
   });
 
+  it('rejects CUSTOMER from deleting devices', async () => {
+    await expect(
+      service.delete('device-1', {
+        id: 'customer-user-1',
+        role: UserRole.CUSTOMER,
+      }),
+    ).rejects.toThrow(ForbiddenException);
+    expect(prismaMock.device.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.device.updateMany).not.toHaveBeenCalled();
+  });
+
   it('maps unique constraint errors to a bad request', async () => {
     prismaMock.device.create.mockRejectedValue({
       code: 'P2002',
@@ -410,6 +443,18 @@ describe('DevicesService', () => {
         { id: 'agent-user-1', role: UserRole.AGENT },
       ),
     ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('rejects CUSTOMER from updating devices', async () => {
+    await expect(
+      service.update(
+        'device-1',
+        { model: 'Model Z' },
+        { id: 'customer-user-1', role: UserRole.CUSTOMER },
+      ),
+    ).rejects.toThrow(ForbiddenException);
+    expect(prismaMock.device.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.device.update).not.toHaveBeenCalled();
   });
 
   it('throws not found when device does not exist during update', async () => {
