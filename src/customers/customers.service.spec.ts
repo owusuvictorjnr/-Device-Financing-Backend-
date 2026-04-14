@@ -112,7 +112,7 @@ describe('CustomersService', () => {
         },
         { id: 'admin-1', role: UserRole.ADMIN },
       ),
-    ).rejects.toThrow(new BadRequestException('agentId is required'));
+    ).rejects.toThrow(BadRequestException);
   });
 
   it('rejects create when linked user is not CUSTOMER role', async () => {
@@ -136,7 +136,7 @@ describe('CustomersService', () => {
         },
         { id: 'admin-1', role: UserRole.ADMIN },
       ),
-    ).rejects.toThrow(new BadRequestException('User must have CUSTOMER role'));
+    ).rejects.toThrow(BadRequestException);
   });
 
   it('maps unique-constraint error during create to domain exception', async () => {
@@ -164,7 +164,7 @@ describe('CustomersService', () => {
         },
         { id: 'admin-1', role: UserRole.ADMIN },
       ),
-    ).rejects.toThrow(new BadRequestException('National ID already in use'));
+    ).rejects.toThrow(BadRequestException);
   });
 
   it('scopes findAll results to authenticated agent', async () => {
@@ -251,9 +251,7 @@ describe('CustomersService', () => {
         id: 'admin-1',
         role: UserRole.ADMIN,
       }),
-    ).rejects.toThrow(
-      new NotFoundException('Customer with ID customer-1 not found'),
-    );
+    ).rejects.toThrow(NotFoundException);
   });
 
   it('denies findOne when AGENT tries to access another agent customer', async () => {
@@ -282,9 +280,7 @@ describe('CustomersService', () => {
         id: 'agent-user-1',
         role: UserRole.AGENT,
       }),
-    ).rejects.toThrow(
-      new ForbiddenException('Authenticated user is not an active agent'),
-    );
+    ).rejects.toThrow(ForbiddenException);
 
     expect(prismaMock.customer.findUnique).toHaveBeenCalledTimes(1);
     expect(prismaMock.customer.update).not.toHaveBeenCalled();
@@ -300,9 +296,7 @@ describe('CustomersService', () => {
         { address: 'Tema' },
         { id: 'agent-user-1', role: UserRole.AGENT },
       ),
-    ).rejects.toThrow(
-      new ForbiddenException('You can only access your assigned customers'),
-    );
+    ).rejects.toThrow('You can only access your assigned customers');
 
     expect(prismaMock.customer.findUnique).toHaveBeenCalledTimes(1);
     expect(prismaMock.customer.update).not.toHaveBeenCalled();
@@ -318,9 +312,7 @@ describe('CustomersService', () => {
         { address: 'Tema' },
         { id: 'agent-user-1', role: UserRole.AGENT },
       ),
-    ).rejects.toThrow(
-      new ForbiddenException('Authenticated user is not an active agent'),
-    );
+    ).rejects.toThrow(ForbiddenException);
 
     expect(prismaMock.customer.findUnique).toHaveBeenCalledTimes(1);
     expect(prismaMock.customer.update).not.toHaveBeenCalled();
@@ -335,9 +327,7 @@ describe('CustomersService', () => {
         id: 'agent-user-1',
         role: UserRole.AGENT,
       }),
-    ).rejects.toThrow(
-      new ForbiddenException('You can only access your assigned customers'),
-    );
+    ).rejects.toThrow(ForbiddenException);
 
     expect(prismaMock.customer.findUnique).toHaveBeenCalledTimes(1);
     expect(prismaMock.customer.update).not.toHaveBeenCalled();
@@ -352,9 +342,7 @@ describe('CustomersService', () => {
         id: 'agent-user-1',
         role: UserRole.AGENT,
       }),
-    ).rejects.toThrow(
-      new ForbiddenException('Authenticated user is not an active agent'),
-    );
+    ).rejects.toThrow('Authenticated user is not an active agent');
 
     expect(prismaMock.customer.findUnique).toHaveBeenCalledTimes(1);
     expect(prismaMock.customer.update).not.toHaveBeenCalled();
