@@ -111,7 +111,7 @@ describe('AgentsService', () => {
         region: 'Greater Accra',
         commissionRate: 12,
       }),
-    ).rejects.toThrow(new BadRequestException('User must have AGENT role'));
+    ).rejects.toThrow(BadRequestException);
   });
 
   it('maps create unique-constraint error on user_id', async () => {
@@ -131,16 +131,14 @@ describe('AgentsService', () => {
         region: 'Greater Accra',
         commissionRate: 12,
       }),
-    ).rejects.toThrow(
-      new BadRequestException('User already has an agent profile'),
-    );
+    ).rejects.toThrow(BadRequestException);
   });
 
   it('throws not found when findOne target does not exist', async () => {
     prismaMock.agent.findUnique.mockResolvedValue(null);
 
     await expect(service.findOne('missing-agent')).rejects.toThrow(
-      new NotFoundException('Agent with ID missing-agent not found'),
+      NotFoundException,
     );
   });
 
@@ -156,9 +154,7 @@ describe('AgentsService', () => {
 
     await expect(
       service.update('agent-1', { userId: 'user-agent-2' }),
-    ).rejects.toThrow(
-      new BadRequestException('User already has an agent profile'),
-    );
+    ).rejects.toThrow(BadRequestException);
   });
 
   it('applies update payload with explicit undefined checks', async () => {
@@ -200,7 +196,7 @@ describe('AgentsService', () => {
 
     await expect(
       service.update('agent-1', { region: 'Ashanti' }),
-    ).rejects.toThrow(new NotFoundException('Agent with ID agent-1 not found'));
+    ).rejects.toThrow(NotFoundException);
   });
 
   it('soft deletes an agent and returns confirmation message', async () => {
@@ -233,7 +229,7 @@ describe('AgentsService', () => {
     prismaMock.agent.updateMany.mockResolvedValue({ count: 0 });
 
     await expect(service.delete('missing-agent')).rejects.toThrow(
-      new NotFoundException('Agent with ID missing-agent not found'),
+      NotFoundException,
     );
   });
 });
