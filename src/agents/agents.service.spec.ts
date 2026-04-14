@@ -77,7 +77,11 @@ describe('AgentsService', () => {
       include: {
         _count: {
           select: {
-            customers: true,
+            customers: {
+              where: {
+                deleted_at: null,
+              },
+            },
           },
         },
       },
@@ -179,7 +183,11 @@ describe('AgentsService', () => {
       include: {
         _count: {
           select: {
-            customers: true,
+            customers: {
+              where: {
+                deleted_at: null,
+              },
+            },
           },
         },
       },
