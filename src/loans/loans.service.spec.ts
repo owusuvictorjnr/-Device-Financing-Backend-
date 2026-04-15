@@ -67,7 +67,7 @@ describe('LoansService', () => {
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
     prismaMock.$transaction.mockImplementation(
       async (callback: {
         (tx: {
@@ -114,14 +114,15 @@ describe('LoansService', () => {
       id: 'customer-1',
       agent_id: 'agent-profile-1',
     });
-    prismaMock.device.findFirst.mockResolvedValue({
-      id: 'device-1',
-      customer_id: 'customer-1',
-    });
+    prismaMock.device.findFirst
+      .mockResolvedValueOnce({
+        id: 'device-1',
+        customer_id: 'customer-1',
+      })
+      .mockResolvedValueOnce({
+        customer_id: 'customer-1',
+      });
     prismaMock.device.updateMany.mockResolvedValue({ count: 0 });
-    prismaMock.device.findFirst.mockResolvedValue({
-      customer_id: 'customer-1',
-    });
     prismaMock.loan.findFirst.mockResolvedValue(null);
     prismaMock.loan.create.mockResolvedValue(loanRecord);
 
@@ -129,8 +130,8 @@ describe('LoansService', () => {
       {
         customerId: 'customer-1',
         deviceId: 'device-1',
-        principalAmount: 1000,
-        installmentAmount: 100,
+        principalAmount: '1000',
+        installmentAmount: '100',
         durationDays: 10,
         startDate: new Date('2026-01-01T00:00:00.000Z'),
         agentUserId: 'agent-user-2',
@@ -177,8 +178,8 @@ describe('LoansService', () => {
         {
           customerId: 'customer-1',
           deviceId: 'device-1',
-          principalAmount: 1000,
-          installmentAmount: 100,
+          principalAmount: '1000',
+          installmentAmount: '100',
           durationDays: 10,
           startDate: new Date('2026-01-01T00:00:00.000Z'),
           agentUserId: 'agent-user-2',
@@ -221,8 +222,8 @@ describe('LoansService', () => {
       {
         customerId: 'customer-1',
         deviceId: 'device-1',
-        principalAmount: 1000,
-        installmentAmount: 100,
+        principalAmount: '1000',
+        installmentAmount: '100',
         durationDays: 10,
         startDate: new Date('2026-01-01T00:00:00.000Z'),
         agentUserId: 'agent-user-2',
@@ -268,8 +269,8 @@ describe('LoansService', () => {
         {
           customerId: 'customer-1',
           deviceId: 'device-1',
-          principalAmount: 1000,
-          installmentAmount: 100,
+          principalAmount: '1000',
+          installmentAmount: '100',
           durationDays: 10,
           startDate: new Date('2026-01-01T00:00:00.000Z'),
           agentUserId: 'agent-user-2',
@@ -310,8 +311,8 @@ describe('LoansService', () => {
         {
           customerId: 'customer-1',
           deviceId: 'device-1',
-          principalAmount: 1000,
-          installmentAmount: 100,
+          principalAmount: '1000',
+          installmentAmount: '100',
           durationDays: 10,
           startDate: new Date('2026-01-01T00:00:00.000Z'),
           agentUserId: 'agent-user-2',
@@ -345,8 +346,8 @@ describe('LoansService', () => {
         {
           customerId: 'customer-1',
           deviceId: 'device-1',
-          principalAmount: 1000,
-          installmentAmount: 100,
+          principalAmount: '1000',
+          installmentAmount: '100',
           durationDays: 10,
           startDate: new Date('2026-01-01T00:00:00.000Z'),
           agentUserId: 'agent-user-2',
@@ -364,8 +365,8 @@ describe('LoansService', () => {
         {
           customerId: 'customer-1',
           deviceId: 'device-1',
-          principalAmount: 1000,
-          installmentAmount: 100,
+          principalAmount: '1000',
+          installmentAmount: '100',
           durationDays: 10,
           startDate: new Date('2026-01-01T00:00:00.000Z'),
         },
@@ -394,8 +395,8 @@ describe('LoansService', () => {
         {
           customerId: 'customer-1',
           deviceId: 'device-1',
-          principalAmount: 1000,
-          installmentAmount: 100,
+          principalAmount: '1000',
+          installmentAmount: '100',
           durationDays: 10,
           startDate: new Date('2026-01-01T00:00:00.000Z'),
           agentUserId: 'agent-user-2',
@@ -422,8 +423,8 @@ describe('LoansService', () => {
         {
           customerId: 'customer-1',
           deviceId: 'device-1',
-          principalAmount: 1000,
-          installmentAmount: 100,
+          principalAmount: '1000',
+          installmentAmount: '100',
           durationDays: 10,
           startDate: new Date('2026-01-01T00:00:00.000Z'),
           agentUserId: 'agent-user-2',
@@ -453,8 +454,8 @@ describe('LoansService', () => {
         {
           customerId: 'customer-1',
           deviceId: 'device-1',
-          principalAmount: 1000,
-          installmentAmount: 100,
+          principalAmount: '1000',
+          installmentAmount: '100',
           durationDays: 10,
           startDate: new Date('2026-01-01T00:00:00.000Z'),
         },
@@ -472,14 +473,15 @@ describe('LoansService', () => {
       id: 'customer-1',
       agent_id: 'agent-profile-1',
     });
-    prismaMock.device.findFirst.mockResolvedValue({
-      id: 'device-1',
-      customer_id: 'customer-1',
-    });
+    prismaMock.device.findFirst
+      .mockResolvedValueOnce({
+        id: 'device-1',
+        customer_id: 'customer-1',
+      })
+      .mockResolvedValueOnce({
+        customer_id: 'customer-1',
+      });
     prismaMock.device.updateMany.mockResolvedValue({ count: 0 });
-    prismaMock.device.findFirst.mockResolvedValue({
-      customer_id: 'customer-1',
-    });
     prismaMock.loan.findFirst.mockResolvedValue(null);
     prismaMock.loan.create.mockResolvedValue(loanRecord);
 
@@ -487,8 +489,8 @@ describe('LoansService', () => {
       {
         customerId: 'customer-1',
         deviceId: 'device-1',
-        principalAmount: 1000,
-        installmentAmount: 100,
+        principalAmount: '1000',
+        installmentAmount: '100',
         durationDays: 10,
         startDate: new Date('2026-01-01T00:00:00.000Z'),
       },
