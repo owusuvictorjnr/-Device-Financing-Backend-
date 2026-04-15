@@ -17,6 +17,9 @@ import { PaymentsService } from './payments.service';
 describe('PaymentsService', () => {
   let service: PaymentsService;
   const prismaMock = {
+    agent: {
+      findFirst: jest.fn(),
+    },
     customer: {
       findFirst: jest.fn(),
     },
@@ -77,6 +80,12 @@ describe('PaymentsService', () => {
     jest.useFakeTimers();
     const paidAt = new Date('2026-01-05T00:00:00.000Z');
     jest.setSystemTime(paidAt);
+    const createdPaymentRecord = {
+      ...paymentRecord,
+      paid_at: paidAt,
+      created_at: paidAt,
+      updated_at: paidAt,
+    };
 
     prismaMock.loan.findFirst.mockResolvedValue({
       id: 'loan-1',
@@ -85,7 +94,7 @@ describe('PaymentsService', () => {
       status: 'ACTIVE',
     });
     prismaMock.customer.findFirst.mockResolvedValue({ id: 'customer-1' });
-    prismaMock.payment.create.mockResolvedValue(paymentRecord);
+    prismaMock.payment.create.mockResolvedValue(createdPaymentRecord);
 
     try {
       const result = await service.create(
@@ -147,6 +156,69 @@ describe('PaymentsService', () => {
     ).rejects.toThrow(ForbiddenException);
   });
 
+  it('rejects AGENT access when customer is reassigned to another agent', async () => {
+    prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-profile-1' });
+    prismaMock.customer.findFirst.mockResolvedValue({
+      id: 'customer-1',
+      agent_id: 'agent-profile-2',
+    });
+    prismaMock.payment.findUnique.mockResolvedValue(paymentRecord);
+
+    await expect(
+      service.findOne('payment-1', {
+        id: 'agent-user-1',
+        role: UserRole.AGENT,
+      }),
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('scopes AGENT findAll to the agent profile and customer assignment', async () => {
+    prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-profile-1' });
+    prismaMock.payment.findMany.mockResolvedValue([paymentRecord]);
+
+    await service.findAll(
+      { skip: 0, take: 10 },
+      { id: 'agent-user-1', role: UserRole.AGENT },
+    );
+
+    expect(prismaMock.payment.findMany).toHaveBeenCalledWith({
+      where: {
+        deleted_at: null,
+        loan: {
+          customer: {
+            agent_id: 'agent-profile-1',
+          },
+        },
+      },
+      skip: 0,
+      take: 10,
+      orderBy: { created_at: 'desc' },
+      include: {
+        loan: {
+          select: {
+            customer_id: true,
+            agent_id: true,
+          },
+        },
+      },
+    });
+  });
+
+  it('rejects AGENT findAll when customer is assigned to another agent', async () => {
+    prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-profile-1' });
+    prismaMock.customer.findFirst.mockResolvedValue({
+      id: 'customer-1',
+      agent_id: 'agent-profile-2',
+    });
+
+    await expect(
+      service.findAll(
+        { skip: 0, take: 10, customerId: 'customer-1' },
+        { id: 'agent-user-1', role: UserRole.AGENT },
+      ),
+    ).rejects.toThrow(ForbiddenException);
+  });
+
   it('rejects create for PAID loan', async () => {
     prismaMock.loan.findFirst.mockResolvedValue({
       id: 'loan-1',
@@ -166,6 +238,32 @@ describe('PaymentsService', () => {
         { id: 'admin-user-1', role: UserRole.ADMIN },
       ),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  it('falls back to a generic message when unique constraint target is missing', async () => {
+    prismaMock.loan.findFirst.mockResolvedValue({
+      id: 'loan-1',
+      customer_id: 'customer-1',
+      agent_id: 'agent-user-1',
+      status: 'ACTIVE',
+    });
+    prismaMock.customer.findFirst.mockResolvedValue({ id: 'customer-1' });
+    prismaMock.payment.create.mockRejectedValue({
+      code: 'P2002',
+      meta: {},
+    });
+
+    await expect(
+      service.create(
+        {
+          loanId: 'loan-1',
+          amount: '100',
+          paymentMethod: PaymentMethod.CASH,
+          reference: 'PAY-1',
+        },
+        { id: 'customer-user-1', role: UserRole.CUSTOMER },
+      ),
+    ).rejects.toThrow('Payment violates a unique constraint');
   });
 
   it('scopes CUSTOMER findAll to own payments', async () => {
@@ -206,6 +304,41 @@ describe('PaymentsService', () => {
         { id: 'customer-user-1', role: UserRole.CUSTOMER },
       ),
     ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('clears paid_at when status changes to FAILED without an explicit paidAt', async () => {
+    prismaMock.payment.findUnique.mockResolvedValue(paymentRecord);
+    prismaMock.payment.update.mockResolvedValue({
+      ...paymentRecord,
+      status: PaymentStatus.FAILED,
+      paid_at: null,
+      loan: {
+        customer_id: 'customer-1',
+        agent_id: 'agent-user-1',
+      },
+    });
+
+    await service.update(
+      'payment-1',
+      { status: PaymentStatus.FAILED },
+      { id: 'admin-user-1', role: UserRole.ADMIN },
+    );
+
+    expect(prismaMock.payment.update).toHaveBeenCalledWith({
+      where: { id: 'payment-1' },
+      data: {
+        status: PaymentStatus.FAILED,
+        paid_at: null,
+      },
+      include: {
+        loan: {
+          select: {
+            customer_id: true,
+            agent_id: true,
+          },
+        },
+      },
+    });
   });
 
   it('soft-deletes payment and returns message', async () => {
