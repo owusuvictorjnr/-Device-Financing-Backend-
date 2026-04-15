@@ -16,10 +16,12 @@ import { CurrentUser } from '../common/decorators/current-user/current-user.deco
 import { Roles } from '../common/decorators/roles/roles.decorator';
 import { JwtGuard } from '../common/guards/jwt/jwt.guard';
 import { RolesGuard } from '../common/guards/roles/roles.guard';
-import { CreatePaymentDto } from './dto/create-payment.dto';
-import { FindAllPaymentsQueryDto } from './dto/find-all-payments-query.dto';
-import { PaymentResponseDto } from './dto/payment-response.dto';
-import { UpdatePaymentDto } from './dto/update-payment.dto';
+import {
+  CreatePaymentDto,
+  FindAllPaymentsQueryDto,
+  PaymentResponseDto,
+  UpdatePaymentDto,
+} from './dto';
 import { PaymentsService } from './payments.service';
 import { AuthActor } from './payments.types';
 
