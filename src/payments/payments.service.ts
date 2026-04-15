@@ -38,6 +38,9 @@ type PaymentRecord = {
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;
+};
+
+type PaymentWithLoanRecord = PaymentRecord & {
   loan: {
     customer_id: string;
     agent_id: string;
@@ -77,14 +80,6 @@ export class PaymentsService {
           paid_at: paidAt,
           recorded_by: recordedBy,
           recorded_by_id: actor.id,
-        },
-        include: {
-          loan: {
-            select: {
-              customer_id: true,
-              agent_id: true,
-            },
-          },
         },
       });
 
@@ -166,14 +161,6 @@ export class PaymentsService {
       skip: query.skip,
       take: query.take,
       orderBy: { created_at: 'desc' },
-      include: {
-        loan: {
-          select: {
-            customer_id: true,
-            agent_id: true,
-          },
-        },
-      },
     });
 
     return payments.map((payment) => this.mapPaymentToResponseDto(payment));
@@ -217,14 +204,6 @@ export class PaymentsService {
             ? { status: updatePaymentDto.status }
             : {}),
           ...(paidAt !== undefined ? { paid_at: paidAt } : {}),
-        },
-        include: {
-          loan: {
-            select: {
-              customer_id: true,
-              agent_id: true,
-            },
-          },
         },
       });
 
@@ -287,7 +266,7 @@ export class PaymentsService {
     return loan;
   }
 
-  private async getPaymentById(id: string): Promise<PaymentRecord> {
+  private async getPaymentById(id: string): Promise<PaymentWithLoanRecord> {
     const payment = await this.prisma.payment.findUnique({
       where: { id },
       include: {
@@ -396,7 +375,7 @@ export class PaymentsService {
   }
 
   private async assertPaymentAccess(
-    payment: PaymentRecord,
+    payment: PaymentWithLoanRecord,
     actor: AuthActor,
   ): Promise<void> {
     await this.assertLoanAccess(payment.loan, actor);
