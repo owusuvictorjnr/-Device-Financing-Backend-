@@ -68,6 +68,8 @@ export class PaymentsService {
       (status === PaymentStatus.COMPLETED ? new Date() : null);
 
     const recordedBy = this.resolveRecordedBy(actor.role);
+    const recordedByUserId =
+      recordedBy === PaymentRecordedBy.SYSTEM ? null : actor.id;
 
     try {
       const payment = await this.prisma.payment.create({
@@ -79,7 +81,7 @@ export class PaymentsService {
           status,
           paid_at: paidAt,
           recorded_by: recordedBy,
-          recorded_by_id: actor.id,
+          recorded_by_id: recordedByUserId,
         },
       });
 
@@ -185,7 +187,7 @@ export class PaymentsService {
     const payment = await this.getPaymentById(id);
     await this.assertPaymentAccess(payment, actor);
 
-    const paidAt = this.resolveUpdatedPaidAt(updatePaymentDto);
+    const paidAt = this.resolveUpdatedPaidAt(updatePaymentDto, payment);
 
     try {
       const updated = await this.prisma.payment.update({
@@ -412,12 +414,17 @@ export class PaymentsService {
 
   private resolveUpdatedPaidAt(
     updatePaymentDto: UpdatePaymentDto,
+    currentPayment: PaymentRecord,
   ): Date | null | undefined {
     if (updatePaymentDto.paidAt !== undefined) {
       return updatePaymentDto.paidAt;
     }
 
     if (updatePaymentDto.status === PaymentStatus.COMPLETED) {
+      if (currentPayment.paid_at !== null) {
+        return undefined;
+      }
+
       return new Date();
     }
 
