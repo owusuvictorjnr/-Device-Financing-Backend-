@@ -9,6 +9,7 @@ import {
   PaymentRecordedBy,
   PaymentStatus,
   Prisma,
+  LoanStatus,
   UserRole,
 } from '@prisma/client';
 import {
@@ -54,7 +55,7 @@ export class PaymentsService {
     const loan = await this.getActiveLoanById(createPaymentDto.loanId);
     await this.assertLoanAccess(loan, actor);
 
-    if (loan.status === 'PAID') {
+    if (loan.status === LoanStatus.PAID) {
       throw new BadRequestException('Cannot record payment for a paid loan');
     }
 
@@ -126,10 +127,29 @@ export class PaymentsService {
         };
       }
     } else if (actor.role === UserRole.AGENT) {
-      where.loan = {
-        ...(query.customerId ? { customer_id: query.customerId } : {}),
-        agent_id: actor.id,
-      };
+      const agentProfile = await this.getActiveAgentProfileByUserId(actor.id);
+
+      if (query.customerId) {
+        const customer = await this.getActiveCustomerById(query.customerId);
+        if (customer.agent_id !== agentProfile.id) {
+          throw new ForbiddenException(
+            'Agents can only access payments for their own customers',
+          );
+        }
+
+        where.loan = {
+          customer_id: query.customerId,
+          customer: {
+            agent_id: agentProfile.id,
+          },
+        };
+      } else {
+        where.loan = {
+          customer: {
+            agent_id: agentProfile.id,
+          },
+        };
+      }
     } else {
       const customer = await this.getActiveCustomerByUserId(actor.id);
       if (query.customerId && query.customerId !== customer.id) {
@@ -179,10 +199,13 @@ export class PaymentsService {
     await this.assertPaymentAccess(payment, actor);
 
     const paidAt =
-      updatePaymentDto.paidAt ??
-      (updatePaymentDto.status === PaymentStatus.COMPLETED
-        ? new Date()
-        : undefined);
+      updatePaymentDto.paidAt !== undefined
+        ? updatePaymentDto.paidAt
+        : updatePaymentDto.status === PaymentStatus.COMPLETED
+          ? new Date()
+          : updatePaymentDto.status !== undefined
+            ? null
+            : undefined;
 
     try {
       const updated = await this.prisma.payment.update({
@@ -249,7 +272,7 @@ export class PaymentsService {
     id: string;
     customer_id: string;
     agent_id: string;
-    status: string;
+    status: LoanStatus;
   }> {
     const loan = await this.prisma.loan.findFirst({
       where: {
@@ -311,6 +334,47 @@ export class PaymentsService {
     return customer;
   }
 
+  private async getActiveAgentProfileByUserId(
+    userId: string,
+  ): Promise<{ id: string }> {
+    const agent = await this.prisma.agent.findFirst({
+      where: {
+        user_id: userId,
+        deleted_at: null,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!agent) {
+      throw new ForbiddenException('Authenticated user is not an active agent');
+    }
+
+    return agent;
+  }
+
+  private async getActiveCustomerById(
+    customerId: string,
+  ): Promise<{ id: string; agent_id: string }> {
+    const customer = await this.prisma.customer.findFirst({
+      where: {
+        id: customerId,
+        deleted_at: null,
+      },
+      select: {
+        id: true,
+        agent_id: true,
+      },
+    });
+
+    if (!customer) {
+      throw new NotFoundException(`Customer with ID ${customerId} not found`);
+    }
+
+    return customer;
+  }
+
   private async assertLoanAccess(
     loan: { customer_id: string; agent_id: string },
     actor: AuthActor,
@@ -320,9 +384,12 @@ export class PaymentsService {
     }
 
     if (actor.role === UserRole.AGENT) {
-      if (loan.agent_id !== actor.id) {
+      const agentProfile = await this.getActiveAgentProfileByUserId(actor.id);
+      const customer = await this.getActiveCustomerById(loan.customer_id);
+
+      if (customer.agent_id !== agentProfile.id) {
         throw new ForbiddenException(
-          'Agents can only access payments for their own loans',
+          'Agents can only access payments for their own customers',
         );
       }
 
@@ -374,11 +441,16 @@ export class PaymentsService {
   private handleUniqueConstraintError(error: unknown): void {
     if (isPrismaErrorCode(error, 'P2002')) {
       const target = getPrismaUniqueConstraintTarget(error);
-      const targetText = target.join(', ');
 
       if (target.includes('reference')) {
         throw new BadRequestException('Payment reference already exists');
       }
+
+      if (target.length === 0) {
+        throw new BadRequestException('Payment violates a unique constraint');
+      }
+
+      const targetText = target.join(', ');
 
       throw new BadRequestException(
         `Payment violates unique constraint: ${targetText}`,
