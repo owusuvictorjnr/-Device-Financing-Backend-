@@ -93,7 +93,44 @@ export class LoansService {
             createLoanDto.durationDays,
           );
 
-          if (!device.customer_id) {
+          const latestCustomer = await tx.customer.findFirst({
+            where: {
+              id: customer.id,
+              deleted_at: null,
+            },
+            select: { id: true },
+          });
+
+          if (!latestCustomer) {
+            throw new NotFoundException(
+              `Customer with ID ${createLoanDto.customerId} not found`,
+            );
+          }
+
+          const latestDevice = await tx.device.findFirst({
+            where: {
+              id: device.id,
+              deleted_at: null,
+            },
+            select: { customer_id: true },
+          });
+
+          if (!latestDevice) {
+            throw new NotFoundException(
+              `Device with ID ${createLoanDto.deviceId} not found`,
+            );
+          }
+
+          if (
+            latestDevice.customer_id &&
+            latestDevice.customer_id !== customer.id
+          ) {
+            throw new BadRequestException(
+              'Device is assigned to a different customer',
+            );
+          }
+
+          if (!latestDevice.customer_id) {
             const deviceAssignmentResult = await tx.device.updateMany({
               where: {
                 id: device.id,
@@ -114,7 +151,13 @@ export class LoansService {
                 select: { customer_id: true },
               });
 
-              if (latestDevice?.customer_id !== customer.id) {
+              if (!latestDevice) {
+                throw new NotFoundException(
+                  `Device with ID ${createLoanDto.deviceId} not found`,
+                );
+              }
+
+              if (latestDevice.customer_id !== customer.id) {
                 throw new BadRequestException(
                   'Device is assigned to a different customer',
                 );
