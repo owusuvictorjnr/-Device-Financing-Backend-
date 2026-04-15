@@ -135,6 +135,7 @@ export class PaymentsService {
         }
 
         where.loan = {
+          agent_id: actor.id,
           customer_id: query.customerId,
           customer: {
             agent_id: agentProfile.id,
@@ -142,6 +143,7 @@ export class PaymentsService {
         };
       } else {
         where.loan = {
+          agent_id: actor.id,
           customer: {
             agent_id: agentProfile.id,
           },
@@ -360,6 +362,12 @@ export class PaymentsService {
     if (actor.role === UserRole.AGENT) {
       const agentProfile = await this.getActiveAgentProfileByUserId(actor.id);
       const customer = await this.getActiveCustomerById(loan.customer_id);
+
+      if (loan.agent_id !== actor.id) {
+        throw new ForbiddenException(
+          'Agents can only access payments for their own loans',
+        );
+      }
 
       if (customer.agent_id !== agentProfile.id) {
         throw new ForbiddenException(
