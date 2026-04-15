@@ -4,22 +4,26 @@ import {
   IsDate,
   IsEnum,
   IsInt,
-  IsNumber,
-  IsPositive,
+  IsString,
+  Matches,
   Min,
   ValidateIf,
 } from 'class-validator';
 
 export class UpdateLoanDto {
   @ValidateIf((_, value) => value !== undefined)
-  @IsNumber()
-  @IsPositive()
-  principalAmount?: number;
+  @IsString()
+  @Matches(/^(?!0+(?:\.0+)?$)\d+(?:\.\d+)?$/, {
+    message: 'principalAmount must be a positive decimal string',
+  })
+  principalAmount?: string;
 
   @ValidateIf((_, value) => value !== undefined)
-  @IsNumber()
-  @IsPositive()
-  installmentAmount?: number;
+  @IsString()
+  @Matches(/^(?!0+(?:\.0+)?$)\d+(?:\.\d+)?$/, {
+    message: 'installmentAmount must be a positive decimal string',
+  })
+  installmentAmount?: string;
 
   @ValidateIf((_, value) => value !== undefined)
   @IsInt()
