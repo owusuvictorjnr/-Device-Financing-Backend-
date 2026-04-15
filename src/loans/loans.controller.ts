@@ -23,11 +23,7 @@ import {
   UpdateLoanDto,
 } from './dto';
 import { LoansService } from './loans.service';
-
-type AuthActor = {
-  id: string;
-  role: UserRole;
-};
+import { AuthActor } from './loans.types';
 
 @ApiTags('loans')
 @Controller('loans')
