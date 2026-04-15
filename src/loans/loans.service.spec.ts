@@ -71,6 +71,9 @@ describe('LoansService', () => {
     prismaMock.$transaction.mockImplementation(
       async (callback: {
         (tx: {
+          customer: {
+            findFirst: typeof prismaMock.customer.findFirst;
+          };
           device: {
             updateMany: typeof prismaMock.device.updateMany;
             findFirst: typeof prismaMock.device.findFirst;
@@ -82,6 +85,9 @@ describe('LoansService', () => {
         }): Promise<unknown>;
       }) =>
         callback({
+          customer: {
+            findFirst: prismaMock.customer.findFirst,
+          },
           device: {
             updateMany: prismaMock.device.updateMany,
             findFirst: prismaMock.device.findFirst,
@@ -252,6 +258,9 @@ describe('LoansService', () => {
       customer_id: null,
     });
     prismaMock.device.updateMany.mockResolvedValue({ count: 0 });
+    prismaMock.device.findFirst.mockResolvedValueOnce({
+      customer_id: null,
+    });
     prismaMock.device.findFirst.mockResolvedValueOnce(null);
 
     await expect(
@@ -267,15 +276,85 @@ describe('LoansService', () => {
         },
         { id: 'admin-1', role: UserRole.ADMIN },
       ),
-    ).rejects.toThrow(BadRequestException);
+    ).rejects.toThrow(NotFoundException);
 
-    expect(prismaMock.device.findFirst).toHaveBeenNthCalledWith(2, {
+    expect(prismaMock.device.findFirst).toHaveBeenNthCalledWith(3, {
       where: {
         id: 'device-1',
         deleted_at: null,
       },
       select: { customer_id: true },
     });
+    expect(prismaMock.loan.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects creation when customer is soft-deleted before transaction create', async () => {
+    prismaMock.user.findFirst.mockResolvedValue({ id: 'agent-user-2' });
+    prismaMock.agent.findFirst.mockResolvedValue({
+      id: 'agent-profile-1',
+      user_id: 'agent-user-2',
+    });
+    prismaMock.customer.findFirst
+      .mockResolvedValueOnce({
+        id: 'customer-1',
+        agent_id: 'agent-profile-1',
+      })
+      .mockResolvedValueOnce(null);
+    prismaMock.device.findFirst.mockResolvedValue({
+      id: 'device-1',
+      customer_id: 'customer-1',
+    });
+
+    await expect(
+      service.create(
+        {
+          customerId: 'customer-1',
+          deviceId: 'device-1',
+          principalAmount: 1000,
+          installmentAmount: 100,
+          durationDays: 10,
+          startDate: new Date('2026-01-01T00:00:00.000Z'),
+          agentUserId: 'agent-user-2',
+        },
+        { id: 'admin-1', role: UserRole.ADMIN },
+      ),
+    ).rejects.toThrow(NotFoundException);
+
+    expect(prismaMock.loan.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects creation when device is soft-deleted before transaction create', async () => {
+    prismaMock.user.findFirst.mockResolvedValue({ id: 'agent-user-2' });
+    prismaMock.agent.findFirst.mockResolvedValue({
+      id: 'agent-profile-1',
+      user_id: 'agent-user-2',
+    });
+    prismaMock.customer.findFirst.mockResolvedValue({
+      id: 'customer-1',
+      agent_id: 'agent-profile-1',
+    });
+    prismaMock.device.findFirst
+      .mockResolvedValueOnce({
+        id: 'device-1',
+        customer_id: 'customer-1',
+      })
+      .mockResolvedValueOnce(null);
+
+    await expect(
+      service.create(
+        {
+          customerId: 'customer-1',
+          deviceId: 'device-1',
+          principalAmount: 1000,
+          installmentAmount: 100,
+          durationDays: 10,
+          startDate: new Date('2026-01-01T00:00:00.000Z'),
+          agentUserId: 'agent-user-2',
+        },
+        { id: 'admin-1', role: UserRole.ADMIN },
+      ),
+    ).rejects.toThrow(NotFoundException);
+
     expect(prismaMock.loan.create).not.toHaveBeenCalled();
   });
 
