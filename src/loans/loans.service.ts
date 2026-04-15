@@ -17,11 +17,7 @@ import {
   LoanResponseDto,
   UpdateLoanDto,
 } from './dto';
-
-type AuthActor = {
-  id: string;
-  role: UserRole;
-};
+import { AuthActor } from './loans.types';
 
 type LoanRecord = {
   id: string;
@@ -74,7 +70,7 @@ export class LoansService {
 
     if (actor.role === UserRole.ADMIN) {
       const selectedAgentProfile =
-        await this.getActiveAgentProfileByUserId(activeAgentUserId);
+        await this.getSelectedActiveAgentProfileByUserId(activeAgentUserId);
 
       if (customer.agent_id !== selectedAgentProfile.id) {
         throw new BadRequestException(
@@ -110,8 +106,11 @@ export class LoansService {
             });
 
             if (deviceAssignmentResult.count === 0) {
-              const latestDevice = await tx.device.findUnique({
-                where: { id: device.id },
+              const latestDevice = await tx.device.findFirst({
+                where: {
+                  id: device.id,
+                  deleted_at: null,
+                },
                 select: { customer_id: true },
               });
 
@@ -332,6 +331,30 @@ export class LoansService {
   private async getActiveAgentProfileByUserId(
     userId: string,
   ): Promise<{ id: string; user_id: string }> {
+    const agent = await this.findActiveAgentProfileByUserId(userId);
+
+    if (!agent) {
+      throw new ForbiddenException('Authenticated user is not an active agent');
+    }
+
+    return agent;
+  }
+
+  private async getSelectedActiveAgentProfileByUserId(
+    userId: string,
+  ): Promise<{ id: string; user_id: string }> {
+    const agent = await this.findActiveAgentProfileByUserId(userId);
+
+    if (!agent) {
+      throw new BadRequestException('Selected agent is not an active agent');
+    }
+
+    return agent;
+  }
+
+  private async findActiveAgentProfileByUserId(
+    userId: string,
+  ): Promise<{ id: string; user_id: string } | null> {
     const agent = await this.prisma.agent.findFirst({
       where: {
         user_id: userId,
@@ -342,10 +365,6 @@ export class LoansService {
         user_id: true,
       },
     });
-
-    if (!agent) {
-      throw new ForbiddenException('Authenticated user is not an active agent');
-    }
 
     return agent;
   }
