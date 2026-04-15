@@ -120,14 +120,6 @@ describe('PaymentsService', () => {
           recorded_by: PaymentRecordedBy.CUSTOMER,
           recorded_by_id: 'customer-user-1',
         },
-        include: {
-          loan: {
-            select: {
-              customer_id: true,
-              agent_id: true,
-            },
-          },
-        },
       });
     } finally {
       jest.useRealTimers();
@@ -193,14 +185,6 @@ describe('PaymentsService', () => {
       skip: 0,
       take: 10,
       orderBy: { created_at: 'desc' },
-      include: {
-        loan: {
-          select: {
-            customer_id: true,
-            agent_id: true,
-          },
-        },
-      },
     });
   });
 
@@ -285,14 +269,6 @@ describe('PaymentsService', () => {
       skip: 0,
       take: 10,
       orderBy: { created_at: 'desc' },
-      include: {
-        loan: {
-          select: {
-            customer_id: true,
-            agent_id: true,
-          },
-        },
-      },
     });
   });
 
@@ -329,14 +305,6 @@ describe('PaymentsService', () => {
       data: {
         status: PaymentStatus.FAILED,
         paid_at: null,
-      },
-      include: {
-        loan: {
-          select: {
-            customer_id: true,
-            agent_id: true,
-          },
-        },
       },
     });
   });
