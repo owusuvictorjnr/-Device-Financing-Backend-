@@ -216,6 +216,28 @@ describe('PaymentsService', () => {
     ).rejects.toThrow(ForbiddenException);
   });
 
+  it('rejects AGENT access when loan belongs to another agent user', async () => {
+    prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-profile-1' });
+    prismaMock.customer.findFirst.mockResolvedValue({
+      id: 'customer-1',
+      agent_id: 'agent-profile-1',
+    });
+    prismaMock.payment.findUnique.mockResolvedValue({
+      ...paymentRecord,
+      loan: {
+        customer_id: 'customer-1',
+        agent_id: 'another-agent-user',
+      },
+    });
+
+    await expect(
+      service.findOne('payment-1', {
+        id: 'agent-user-1',
+        role: UserRole.AGENT,
+      }),
+    ).rejects.toThrow('Agents can only access payments for their own loans');
+  });
+
   it('scopes AGENT findAll to the agent profile and customer assignment', async () => {
     prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-profile-1' });
     prismaMock.payment.findMany.mockResolvedValue([paymentRecord]);
@@ -229,6 +251,37 @@ describe('PaymentsService', () => {
       where: {
         deleted_at: null,
         loan: {
+          agent_id: 'agent-user-1',
+          customer: {
+            agent_id: 'agent-profile-1',
+          },
+        },
+      },
+      skip: 0,
+      take: 10,
+      orderBy: { created_at: 'desc' },
+    });
+  });
+
+  it('scopes AGENT findAll with customerId by agent user and customer assignment', async () => {
+    prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-profile-1' });
+    prismaMock.customer.findFirst.mockResolvedValue({
+      id: 'customer-1',
+      agent_id: 'agent-profile-1',
+    });
+    prismaMock.payment.findMany.mockResolvedValue([paymentRecord]);
+
+    await service.findAll(
+      { skip: 0, take: 10, customerId: 'customer-1' },
+      { id: 'agent-user-1', role: UserRole.AGENT },
+    );
+
+    expect(prismaMock.payment.findMany).toHaveBeenCalledWith({
+      where: {
+        deleted_at: null,
+        loan: {
+          agent_id: 'agent-user-1',
+          customer_id: 'customer-1',
           customer: {
             agent_id: 'agent-profile-1',
           },
