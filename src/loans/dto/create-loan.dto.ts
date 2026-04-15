@@ -5,10 +5,9 @@ import {
   IsDate,
   IsEnum,
   IsInt,
-  IsNumber,
   IsOptional,
-  IsPositive,
   IsUUID,
+  Matches,
   Min,
 } from 'class-validator';
 
@@ -19,13 +18,15 @@ export class CreateLoanDto {
   @IsUUID()
   deviceId!: string;
 
-  @IsNumber()
-  @IsPositive()
-  principalAmount!: number;
+  @Matches(/^(?!0+(?:\.0+)?$)\d+(?:\.\d+)?$/, {
+    message: 'principalAmount must be a positive decimal string',
+  })
+  principalAmount!: string;
 
-  @IsNumber()
-  @IsPositive()
-  installmentAmount!: number;
+  @Matches(/^(?!0+(?:\.0+)?$)\d+(?:\.\d+)?$/, {
+    message: 'installmentAmount must be a positive decimal string',
+  })
+  installmentAmount!: string;
 
   @IsInt()
   @Min(1)
