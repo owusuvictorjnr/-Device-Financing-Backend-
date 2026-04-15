@@ -39,7 +39,7 @@ describe('LoansController', () => {
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   it('should be defined', () => {
@@ -50,8 +50,8 @@ describe('LoansController', () => {
     const dto = {
       customerId: 'customer-1',
       deviceId: 'device-1',
-      principalAmount: 1000,
-      installmentAmount: 100,
+      principalAmount: '1000',
+      installmentAmount: '100',
       durationDays: 10,
       startDate: new Date('2026-01-01T00:00:00.000Z'),
     };
@@ -105,8 +105,8 @@ describe('LoansController', () => {
 
   it('forwards update requests to the service with params, payload, and authenticated actor context', async () => {
     const dto = {
-      principalAmount: 1200,
-      installmentAmount: 120,
+      principalAmount: '1200',
+      installmentAmount: '120',
     };
     loansServiceMock.update.mockResolvedValue({ id: 'loan-1' });
 
@@ -122,7 +122,7 @@ describe('LoansController', () => {
     await expect(
       controller.update(
         'loan-1',
-        { principalAmount: 1200 },
+        { principalAmount: '1200' },
         '',
         UserRole.ADMIN,
       ),
