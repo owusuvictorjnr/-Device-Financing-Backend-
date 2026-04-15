@@ -52,7 +52,7 @@ export class PaymentsService {
     createPaymentDto: CreatePaymentDto,
     actor: AuthActor,
   ): Promise<PaymentResponseDto> {
-    const loan = await this.getActiveLoanById(createPaymentDto.loanId);
+    const loan = await this.getExistingLoanById(createPaymentDto.loanId);
     await this.assertLoanAccess(loan, actor);
 
     if (loan.status === LoanStatus.PAID) {
@@ -198,14 +198,7 @@ export class PaymentsService {
     const payment = await this.getPaymentById(id);
     await this.assertPaymentAccess(payment, actor);
 
-    const paidAt =
-      updatePaymentDto.paidAt !== undefined
-        ? updatePaymentDto.paidAt
-        : updatePaymentDto.status === PaymentStatus.COMPLETED
-          ? new Date()
-          : updatePaymentDto.status !== undefined
-            ? null
-            : undefined;
+    const paidAt = this.resolveUpdatedPaidAt(updatePaymentDto);
 
     try {
       const updated = await this.prisma.payment.update({
@@ -268,7 +261,7 @@ export class PaymentsService {
     return { message: `Payment ${id} has been deleted` };
   }
 
-  private async getActiveLoanById(loanId: string): Promise<{
+  private async getExistingLoanById(loanId: string): Promise<{
     id: string;
     customer_id: string;
     agent_id: string;
@@ -436,6 +429,24 @@ export class PaymentsService {
       updatedAt: payment.updated_at,
       deletedAt: payment.deleted_at,
     };
+  }
+
+  private resolveUpdatedPaidAt(
+    updatePaymentDto: UpdatePaymentDto,
+  ): Date | null | undefined {
+    if (updatePaymentDto.paidAt !== undefined) {
+      return updatePaymentDto.paidAt;
+    }
+
+    if (updatePaymentDto.status === PaymentStatus.COMPLETED) {
+      return new Date();
+    }
+
+    if (updatePaymentDto.status !== undefined) {
+      return null;
+    }
+
+    return undefined;
   }
 
   private handleUniqueConstraintError(error: unknown): void {
