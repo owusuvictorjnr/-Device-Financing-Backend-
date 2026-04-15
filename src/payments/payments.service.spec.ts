@@ -126,6 +126,58 @@ describe('PaymentsService', () => {
     }
   });
 
+  it('creates payment as ADMIN with SYSTEM recorder and null recorded_by_id', async () => {
+    jest.useFakeTimers();
+    const paidAt = new Date('2026-01-07T00:00:00.000Z');
+    jest.setSystemTime(paidAt);
+    const createdPaymentRecord = {
+      ...paymentRecord,
+      paid_at: paidAt,
+      created_at: paidAt,
+      updated_at: paidAt,
+      recorded_by: PaymentRecordedBy.SYSTEM,
+      recorded_by_id: null,
+    };
+
+    prismaMock.loan.findFirst.mockResolvedValue({
+      id: 'loan-1',
+      customer_id: 'customer-1',
+      agent_id: 'agent-user-1',
+      status: 'ACTIVE',
+    });
+    prismaMock.payment.create.mockResolvedValue(createdPaymentRecord);
+
+    try {
+      const result = await service.create(
+        {
+          loanId: 'loan-1',
+          amount: '100',
+          paymentMethod: PaymentMethod.CASH,
+          reference: 'PAY-ADMIN-1',
+        },
+        { id: 'admin-user-1', role: UserRole.ADMIN },
+      );
+
+      expect(result.id).toBe('payment-1');
+      expect(result.recordedBy).toBe(PaymentRecordedBy.SYSTEM);
+      expect(result.recordedByUserId).toBeNull();
+      expect(prismaMock.payment.create).toHaveBeenCalledWith({
+        data: {
+          loan_id: 'loan-1',
+          amount: '100',
+          payment_method: PaymentMethod.CASH,
+          reference: 'PAY-ADMIN-1',
+          status: PaymentStatus.COMPLETED,
+          paid_at: paidAt,
+          recorded_by: PaymentRecordedBy.SYSTEM,
+          recorded_by_id: null,
+        },
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('rejects CUSTOMER create for loan outside ownership', async () => {
     prismaMock.loan.findFirst.mockResolvedValue({
       id: 'loan-1',
@@ -305,6 +357,31 @@ describe('PaymentsService', () => {
       data: {
         status: PaymentStatus.FAILED,
         paid_at: null,
+      },
+    });
+  });
+
+  it('does not overwrite paid_at when status stays COMPLETED without explicit paidAt', async () => {
+    prismaMock.payment.findUnique.mockResolvedValue(paymentRecord);
+    prismaMock.payment.update.mockResolvedValue({
+      ...paymentRecord,
+      status: PaymentStatus.COMPLETED,
+      loan: {
+        customer_id: 'customer-1',
+        agent_id: 'agent-user-1',
+      },
+    });
+
+    await service.update(
+      'payment-1',
+      { status: PaymentStatus.COMPLETED },
+      { id: 'admin-user-1', role: UserRole.ADMIN },
+    );
+
+    expect(prismaMock.payment.update).toHaveBeenCalledWith({
+      where: { id: 'payment-1' },
+      data: {
+        status: PaymentStatus.COMPLETED,
       },
     });
   });
