@@ -45,6 +45,8 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
+/output.txt
+/filtered_output.txt
 
 # Runtime data
 pids

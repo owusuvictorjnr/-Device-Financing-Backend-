@@ -1,6 +1,1 @@
-import { UserRole } from '@prisma/client';
-
-export type AuthActor = {
-  id: string;
-  role: UserRole;
-};
+export type { AuthActor } from '../common/types/auth-actor.type';

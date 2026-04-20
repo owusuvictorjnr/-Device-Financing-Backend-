@@ -16,6 +16,7 @@ import { CurrentUser } from '../common/decorators/current-user/current-user.deco
 import { Roles } from '../common/decorators/roles/roles.decorator';
 import { JwtGuard } from '../common/guards/jwt/jwt.guard';
 import { RolesGuard } from '../common/guards/roles/roles.guard';
+import { AuthActor } from '../common/types/auth-actor.type';
 import {
   CreateDeviceDto,
   DeviceResponseDto,
@@ -23,11 +24,6 @@ import {
   UpdateDeviceDto,
 } from './dto';
 import { DevicesService } from './devices.service';
-
-type AuthActor = {
-  id: string;
-  role: UserRole;
-};
 
 @ApiTags('devices')
 @Controller('devices')

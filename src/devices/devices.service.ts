@@ -11,6 +11,11 @@ import {
   UserRole,
 } from '@prisma/client';
 import {
+  assertCustomerBelongsToAgent,
+  getActiveAgentByUserId,
+  getActiveCustomerById,
+} from '../common/access/device-portfolio-access.utils';
+import {
   getPrismaUniqueConstraintTarget,
   isPrismaErrorCode,
 } from '../common/prisma/prisma-error.utils';
@@ -58,7 +63,7 @@ export class DevicesService {
 
     // For AGENT, validate active agent record exists regardless of customer assignment
     if (actor.role === UserRole.AGENT) {
-      actorAgentId = (await this.getActiveAgentByUserId(actor.id)).id;
+      actorAgentId = (await getActiveAgentByUserId(this.prisma, actor.id)).id;
     }
 
     const customerId = await this.resolveTargetCustomerId(
@@ -134,10 +139,14 @@ export class DevicesService {
         where.customer_id = query.customerId;
       }
     } else if (actor.role === UserRole.AGENT) {
-      const agent = await this.getActiveAgentByUserId(actor.id);
+      const agent = await getActiveAgentByUserId(this.prisma, actor.id);
 
       if (query.customerId) {
-        await this.assertCustomerBelongsToAgent(query.customerId, agent.id);
+        await assertCustomerBelongsToAgent(
+          this.prisma,
+          query.customerId,
+          agent.id,
+        );
         where.customer_id = query.customerId;
       } else {
         // Show devices either unassigned or assigned to agent's customers
@@ -270,24 +279,6 @@ export class DevicesService {
     return device;
   }
 
-  private async getActiveAgentByUserId(
-    userId: string,
-  ): Promise<{ id: string }> {
-    const agent = await this.prisma.agent.findFirst({
-      where: {
-        user_id: userId,
-        deleted_at: null,
-      },
-      select: { id: true },
-    });
-
-    if (!agent) {
-      throw new ForbiddenException('Authenticated user is not an active agent');
-    }
-
-    return agent;
-  }
-
   private async getActiveCustomerByUserId(
     userId: string,
   ): Promise<{ id: string }> {
@@ -308,27 +299,6 @@ export class DevicesService {
     return customer;
   }
 
-  private async getActiveCustomerById(
-    customerId: string,
-  ): Promise<{ id: string; agent_id: string }> {
-    const customer = await this.prisma.customer.findFirst({
-      where: {
-        id: customerId,
-        deleted_at: null,
-      },
-      select: {
-        id: true,
-        agent_id: true,
-      },
-    });
-
-    if (!customer) {
-      throw new NotFoundException(`Customer with ID ${customerId} not found`);
-    }
-
-    return customer;
-  }
-
   private async resolveTargetCustomerId(
     actor: AuthActor,
     requestedCustomerId: string | null | undefined,
@@ -343,7 +313,10 @@ export class DevicesService {
       return undefined;
     }
 
-    const customer = await this.getActiveCustomerById(requestedCustomerId);
+    const customer = await getActiveCustomerById(
+      this.prisma,
+      requestedCustomerId,
+    );
 
     if (actor.role === UserRole.ADMIN) {
       return customer.id;
@@ -351,7 +324,8 @@ export class DevicesService {
 
     if (actor.role === UserRole.AGENT) {
       const resolvedAgentId =
-        actorAgentId ?? (await this.getActiveAgentByUserId(actor.id)).id;
+        actorAgentId ??
+        (await getActiveAgentByUserId(this.prisma, actor.id)).id;
 
       if (customer.agent_id !== resolvedAgentId) {
         throw new ForbiddenException(
@@ -365,19 +339,6 @@ export class DevicesService {
     throw new ForbiddenException('Customers cannot assign devices');
   }
 
-  private async assertCustomerBelongsToAgent(
-    customerId: string,
-    agentId: string,
-  ): Promise<void> {
-    const customer = await this.getActiveCustomerById(customerId);
-
-    if (customer.agent_id !== agentId) {
-      throw new ForbiddenException(
-        'Agents can only access devices for their customers',
-      );
-    }
-  }
-
   private async assertDeviceAccess(
     device: DeviceRecord,
     actor: AuthActor,
@@ -387,11 +348,15 @@ export class DevicesService {
     }
 
     if (actor.role === UserRole.AGENT) {
-      const agent = await this.getActiveAgentByUserId(actor.id);
+      const agent = await getActiveAgentByUserId(this.prisma, actor.id);
 
       // Allow access to unassigned devices (inventory) or assigned to agent's customers
       if (device.customer_id) {
-        await this.assertCustomerBelongsToAgent(device.customer_id, agent.id);
+        await assertCustomerBelongsToAgent(
+          this.prisma,
+          device.customer_id,
+          agent.id,
+        );
       }
       return;
     }
@@ -403,19 +368,7 @@ export class DevicesService {
     }
   }
 
-  private mapDeviceToResponseDto(device: {
-    id: string;
-    serial_number: string;
-    device_type: DeviceType;
-    platform: DevicePlatform;
-    model: string;
-    status: DeviceStatus;
-    customer_id: string | null;
-    last_seen: Date | null;
-    created_at: Date;
-    updated_at: Date;
-    deleted_at: Date | null;
-  }): DeviceResponseDto {
+  private mapDeviceToResponseDto(device: DeviceRecord): DeviceResponseDto {
     return {
       id: device.id,
       serialNumber: device.serial_number,
