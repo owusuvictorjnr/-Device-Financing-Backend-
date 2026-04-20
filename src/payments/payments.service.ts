@@ -44,6 +44,7 @@ type PaymentWithLoanRecord = PaymentRecord & {
   loan: {
     customer_id: string;
     agent_id: string;
+    deleted_at: Date | null;
   };
 };
 
@@ -120,6 +121,7 @@ export class PaymentsService {
     if (actor.role === UserRole.ADMIN) {
       if (query.customerId) {
         where.loan = {
+          deleted_at: null,
           customer_id: query.customerId,
         };
       }
@@ -135,6 +137,7 @@ export class PaymentsService {
         }
 
         where.loan = {
+          deleted_at: null,
           agent_id: actor.id,
           customer_id: query.customerId,
           customer: {
@@ -143,6 +146,7 @@ export class PaymentsService {
         };
       } else {
         where.loan = {
+          deleted_at: null,
           agent_id: actor.id,
           customer: {
             agent_id: agentProfile.id,
@@ -156,6 +160,7 @@ export class PaymentsService {
       }
 
       where.loan = {
+        deleted_at: null,
         customer_id: customer.id,
       };
     }
@@ -278,12 +283,18 @@ export class PaymentsService {
           select: {
             customer_id: true,
             agent_id: true,
+            deleted_at: true,
           },
         },
       },
     });
 
-    if (!payment || payment.deleted_at) {
+    if (
+      !payment ||
+      payment.deleted_at ||
+      !payment.loan ||
+      payment.loan.deleted_at
+    ) {
       throw new NotFoundException(`Payment with ID ${id} not found`);
     }
 
