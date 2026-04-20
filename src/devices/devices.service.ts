@@ -11,6 +11,11 @@ import {
   UserRole,
 } from '@prisma/client';
 import {
+  assertCustomerBelongsToAgent,
+  getActiveAgentByUserId,
+  getActiveCustomerById,
+} from '../common/access/device-portfolio-access.utils';
+import {
   getPrismaUniqueConstraintTarget,
   isPrismaErrorCode,
 } from '../common/prisma/prisma-error.utils';
@@ -273,19 +278,7 @@ export class DevicesService {
   private async getActiveAgentByUserId(
     userId: string,
   ): Promise<{ id: string }> {
-    const agent = await this.prisma.agent.findFirst({
-      where: {
-        user_id: userId,
-        deleted_at: null,
-      },
-      select: { id: true },
-    });
-
-    if (!agent) {
-      throw new ForbiddenException('Authenticated user is not an active agent');
-    }
-
-    return agent;
+    return getActiveAgentByUserId(this.prisma, userId);
   }
 
   private async getActiveCustomerByUserId(
@@ -311,22 +304,7 @@ export class DevicesService {
   private async getActiveCustomerById(
     customerId: string,
   ): Promise<{ id: string; agent_id: string }> {
-    const customer = await this.prisma.customer.findFirst({
-      where: {
-        id: customerId,
-        deleted_at: null,
-      },
-      select: {
-        id: true,
-        agent_id: true,
-      },
-    });
-
-    if (!customer) {
-      throw new NotFoundException(`Customer with ID ${customerId} not found`);
-    }
-
-    return customer;
+    return getActiveCustomerById(this.prisma, customerId);
   }
 
   private async resolveTargetCustomerId(
@@ -369,13 +347,7 @@ export class DevicesService {
     customerId: string,
     agentId: string,
   ): Promise<void> {
-    const customer = await this.getActiveCustomerById(customerId);
-
-    if (customer.agent_id !== agentId) {
-      throw new ForbiddenException(
-        'Agents can only access devices for their customers',
-      );
-    }
+    await assertCustomerBelongsToAgent(this.prisma, customerId, agentId);
   }
 
   private async assertDeviceAccess(
