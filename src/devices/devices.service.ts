@@ -20,10 +20,12 @@ import {
   isPrismaErrorCode,
 } from '../common/prisma/prisma-error.utils';
 import { PrismaService } from '../database/prisma.service';
-import { CreateDeviceDto } from './dto/create-device.dto';
-import { DeviceResponseDto } from './dto/device-response.dto';
-import { FindAllDevicesQueryDto } from './dto/find-all-devices-query.dto';
-import { UpdateDeviceDto } from './dto/update-device.dto';
+import {
+  CreateDeviceDto,
+  DeviceResponseDto,
+  FindAllDevicesQueryDto,
+  UpdateDeviceDto,
+} from './dto';
 
 type AuthActor = {
   id: string;
