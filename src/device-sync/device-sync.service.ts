@@ -4,6 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  assertCustomerBelongsToAgent,
+  getActiveAgentByUserId,
+} from '../common/access/device-portfolio-access.utils';
+import {
   DevicePlatform,
   DeviceStatus,
   DeviceType,
@@ -59,15 +63,14 @@ export class DeviceSyncService {
       throw new ForbiddenException('Customers cannot sync devices');
     }
 
-    const device = await this.prisma.device.findFirst({
+    const device = await this.prisma.device.findUnique({
       where: {
         serial_number: syncDeviceDto.serialNumber,
-        deleted_at: null,
       },
       select: deviceSyncSelect,
     });
 
-    if (!device) {
+    if (!device || device.deleted_at) {
       throw new NotFoundException(
         `Device with serial number ${syncDeviceDto.serialNumber} not found`,
       );
@@ -94,60 +97,20 @@ export class DeviceSyncService {
       );
     }
 
-    const updated = await this.prisma.device.findFirst({
+    const updated = await this.prisma.device.findUnique({
       where: {
         id: device.id,
-        deleted_at: null,
       },
       select: deviceSyncSelect,
     });
 
-    if (!updated) {
+    if (!updated || updated.deleted_at) {
       throw new NotFoundException(
         `Device with serial number ${syncDeviceDto.serialNumber} not found`,
       );
     }
 
     return this.mapDeviceToResponseDto(updated);
-  }
-
-  private async getActiveAgentByUserId(
-    userId: string,
-  ): Promise<{ id: string }> {
-    const agent = await this.prisma.agent.findFirst({
-      where: {
-        user_id: userId,
-        deleted_at: null,
-      },
-      select: { id: true },
-    });
-
-    if (!agent) {
-      throw new ForbiddenException('Authenticated user is not an active agent');
-    }
-
-    return agent;
-  }
-
-  private async getActiveCustomerById(
-    customerId: string,
-  ): Promise<{ id: string; agent_id: string }> {
-    const customer = await this.prisma.customer.findFirst({
-      where: {
-        id: customerId,
-        deleted_at: null,
-      },
-      select: {
-        id: true,
-        agent_id: true,
-      },
-    });
-
-    if (!customer) {
-      throw new NotFoundException(`Customer with ID ${customerId} not found`);
-    }
-
-    return customer;
   }
 
   private async assertDeviceSyncAccess(
@@ -159,16 +122,16 @@ export class DeviceSyncService {
     }
 
     if (actor.role === UserRole.AGENT) {
-      const agent = await this.getActiveAgentByUserId(actor.id);
+      const agent = await getActiveAgentByUserId(this.prisma, actor.id);
 
       // Allow sync for unassigned devices (inventory) or devices assigned to agent's customers.
       if (device.customer_id) {
-        const customer = await this.getActiveCustomerById(device.customer_id);
-        if (customer.agent_id !== agent.id) {
-          throw new ForbiddenException(
-            'Agents can only sync devices for their customers',
-          );
-        }
+        await assertCustomerBelongsToAgent(
+          this.prisma,
+          device.customer_id,
+          agent.id,
+          'Agents can only sync devices for their customers',
+        );
       }
 
       return;
