@@ -11,27 +11,47 @@ import {
   UserRole,
 } from '@prisma/client';
 import { Test, TestingModule } from '@nestjs/testing';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { PrismaService } from '../database/prisma.service';
 import { PaymentsService } from './payments.service';
 
 describe('PaymentsService', () => {
   let service: PaymentsService;
-  const prismaMock = {
+  type AsyncMock = jest.MockedFunction<(...args: any[]) => Promise<any>>;
+
+  const prismaMock: {
     agent: {
-      findFirst: jest.fn(),
+      findFirst: AsyncMock;
+    };
+    customer: {
+      findFirst: AsyncMock;
+    };
+    loan: {
+      findFirst: AsyncMock;
+    };
+    payment: {
+      create: AsyncMock;
+      findMany: AsyncMock;
+      findUnique: AsyncMock;
+      update: AsyncMock;
+      updateMany: AsyncMock;
+    };
+  } = {
+    agent: {
+      findFirst: jest.fn() as AsyncMock,
     },
     customer: {
-      findFirst: jest.fn(),
+      findFirst: jest.fn() as AsyncMock,
     },
     loan: {
-      findFirst: jest.fn(),
+      findFirst: jest.fn() as AsyncMock,
     },
     payment: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      updateMany: jest.fn(),
+      create: jest.fn() as AsyncMock,
+      findMany: jest.fn() as AsyncMock,
+      findUnique: jest.fn() as AsyncMock,
+      update: jest.fn() as AsyncMock,
+      updateMany: jest.fn() as AsyncMock,
     },
   };
 
@@ -238,6 +258,24 @@ describe('PaymentsService', () => {
     ).rejects.toThrow('Agents can only access payments for their own loans');
   });
 
+  it('treats payments tied to deleted loans as not found', async () => {
+    prismaMock.payment.findUnique.mockResolvedValue({
+      ...paymentRecord,
+      loan: {
+        customer_id: 'customer-1',
+        agent_id: 'agent-user-1',
+        deleted_at: new Date('2026-01-08T00:00:00.000Z'),
+      },
+    });
+
+    await expect(
+      service.findOne('payment-1', {
+        id: 'admin-user-1',
+        role: UserRole.ADMIN,
+      }),
+    ).rejects.toThrow('Payment with ID payment-1 not found');
+  });
+
   it('scopes AGENT findAll to the agent profile and customer assignment', async () => {
     prismaMock.agent.findFirst.mockResolvedValue({ id: 'agent-profile-1' });
     prismaMock.payment.findMany.mockResolvedValue([paymentRecord]);
@@ -251,6 +289,7 @@ describe('PaymentsService', () => {
       where: {
         deleted_at: null,
         loan: {
+          deleted_at: null,
           agent_id: 'agent-user-1',
           customer: {
             agent_id: 'agent-profile-1',
@@ -280,6 +319,7 @@ describe('PaymentsService', () => {
       where: {
         deleted_at: null,
         loan: {
+          deleted_at: null,
           agent_id: 'agent-user-1',
           customer_id: 'customer-1',
           customer: {
@@ -368,6 +408,7 @@ describe('PaymentsService', () => {
       where: {
         deleted_at: null,
         loan: {
+          deleted_at: null,
           customer_id: 'customer-1',
         },
       },
