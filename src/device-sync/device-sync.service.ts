@@ -8,35 +8,12 @@ import {
   getActiveAgentByUserId,
 } from '../common/access/device-portfolio-access.utils';
 import { mapDeviceToResponseDto } from '../common/mappers';
-import {
-  DevicePlatform,
-  DeviceStatus,
-  DeviceType,
-  Prisma,
-  UserRole,
-} from '@prisma/client';
+import type { DeviceMapperSource } from '../common/mappers/device-mapper';
+import { Prisma, UserRole } from '@prisma/client';
+import type { AuthActor } from '../common/types/auth-actor.type';
 import { PrismaService } from '../database/prisma.service';
 import { DeviceResponseDto } from '../devices/dto';
 import { SyncDeviceDto } from './dto/sync-device.dto';
-
-type AuthActor = {
-  id: string;
-  role: UserRole;
-};
-
-type DeviceSyncRecord = {
-  id: string;
-  serial_number: string;
-  device_type: DeviceType;
-  platform: DevicePlatform;
-  model: string;
-  status: DeviceStatus;
-  customer_id: string | null;
-  last_seen: Date | null;
-  created_at: Date;
-  updated_at: Date;
-  deleted_at: Date | null;
-};
 
 const deviceSyncSelect: Prisma.DeviceSelect = {
   id: true,
@@ -115,7 +92,7 @@ export class DeviceSyncService {
   }
 
   private async assertDeviceSyncAccess(
-    device: DeviceSyncRecord,
+    device: DeviceMapperSource,
     actor: AuthActor,
   ): Promise<void> {
     if (actor.role === UserRole.ADMIN) {
