@@ -22,7 +22,7 @@ describe('DeviceSyncService', () => {
       findFirst: AsyncMock;
     };
     device: {
-      findFirst: AsyncMock;
+      findUnique: AsyncMock;
       updateMany: AsyncMock;
     };
   } = {
@@ -33,7 +33,7 @@ describe('DeviceSyncService', () => {
       findFirst: jest.fn() as AsyncMock,
     },
     device: {
-      findFirst: jest.fn() as AsyncMock,
+      findUnique: jest.fn() as AsyncMock,
       updateMany: jest.fn() as AsyncMock,
     },
   };
@@ -65,7 +65,7 @@ describe('DeviceSyncService', () => {
     jest.useFakeTimers();
     jest.setSystemTime(now);
 
-    prismaMock.device.findFirst
+    prismaMock.device.findUnique
       .mockResolvedValueOnce({
         id: 'device-1',
         serial_number: 'SN-001',
@@ -121,7 +121,7 @@ describe('DeviceSyncService', () => {
     jest.useFakeTimers();
     jest.setSystemTime(now);
 
-    prismaMock.device.findFirst
+    prismaMock.device.findUnique
       .mockResolvedValueOnce({
         id: 'device-2',
         serial_number: 'SN-002',
@@ -164,10 +164,114 @@ describe('DeviceSyncService', () => {
     }
   });
 
+  it('persists provided status in updateMany payload', async () => {
+    const now = new Date('2026-01-13T00:00:00.000Z');
+    jest.useFakeTimers();
+    jest.setSystemTime(now);
+
+    prismaMock.device.findUnique
+      .mockResolvedValueOnce({
+        id: 'device-5',
+        serial_number: 'SN-005',
+        device_type: DeviceType.ANDROID_PHONE,
+        platform: DevicePlatform.ANDROID,
+        model: 'Model B',
+        status: DeviceStatus.ACTIVE,
+        customer_id: null,
+        last_seen: null,
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+      })
+      .mockResolvedValueOnce({
+        id: 'device-5',
+        serial_number: 'SN-005',
+        device_type: DeviceType.ANDROID_PHONE,
+        platform: DevicePlatform.ANDROID,
+        model: 'Model B',
+        status: DeviceStatus.LOCKED,
+        customer_id: null,
+        last_seen: now,
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+      });
+    prismaMock.device.updateMany.mockResolvedValue({ count: 1 });
+
+    try {
+      await service.sync(
+        { serialNumber: 'SN-005', status: DeviceStatus.LOCKED },
+        { id: 'admin-user-1', role: UserRole.ADMIN },
+      );
+
+      expect(prismaMock.device.updateMany).toHaveBeenCalledWith({
+        where: { id: 'device-5', deleted_at: null },
+        data: {
+          last_seen: now,
+          status: DeviceStatus.LOCKED,
+        },
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('uses explicit lastSeen instead of system time', async () => {
+    const now = new Date('2026-01-14T00:00:00.000Z');
+    const explicitLastSeen = new Date('2026-01-01T12:30:00.000Z');
+    jest.useFakeTimers();
+    jest.setSystemTime(now);
+
+    prismaMock.device.findUnique
+      .mockResolvedValueOnce({
+        id: 'device-6',
+        serial_number: 'SN-006',
+        device_type: DeviceType.ANDROID_PHONE,
+        platform: DevicePlatform.ANDROID,
+        model: 'Model C',
+        status: DeviceStatus.ACTIVE,
+        customer_id: null,
+        last_seen: null,
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+      })
+      .mockResolvedValueOnce({
+        id: 'device-6',
+        serial_number: 'SN-006',
+        device_type: DeviceType.ANDROID_PHONE,
+        platform: DevicePlatform.ANDROID,
+        model: 'Model C',
+        status: DeviceStatus.ACTIVE,
+        customer_id: null,
+        last_seen: explicitLastSeen,
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+      });
+    prismaMock.device.updateMany.mockResolvedValue({ count: 1 });
+
+    try {
+      await service.sync(
+        { serialNumber: 'SN-006', lastSeen: explicitLastSeen },
+        { id: 'admin-user-1', role: UserRole.ADMIN },
+      );
+
+      expect(prismaMock.device.updateMany).toHaveBeenCalledWith({
+        where: { id: 'device-6', deleted_at: null },
+        data: {
+          last_seen: explicitLastSeen,
+        },
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('rejects AGENT sync for devices assigned to another agent customer', async () => {
     const now = new Date('2026-01-11T00:00:00.000Z');
 
-    prismaMock.device.findFirst.mockResolvedValue({
+    prismaMock.device.findUnique.mockResolvedValue({
       id: 'device-3',
       serial_number: 'SN-003',
       device_type: DeviceType.ANDROID_PHONE,
@@ -199,7 +303,7 @@ describe('DeviceSyncService', () => {
   it('treats sync as not found when guarded updateMany affects no rows', async () => {
     const now = new Date('2026-01-12T00:00:00.000Z');
 
-    prismaMock.device.findFirst.mockResolvedValue({
+    prismaMock.device.findUnique.mockResolvedValue({
       id: 'device-4',
       serial_number: 'SN-004',
       device_type: DeviceType.ANDROID_PHONE,
@@ -222,11 +326,11 @@ describe('DeviceSyncService', () => {
       ),
     ).rejects.toThrow(NotFoundException);
 
-    expect(prismaMock.device.findFirst).toHaveBeenCalledTimes(1);
+    expect(prismaMock.device.findUnique).toHaveBeenCalledTimes(1);
   });
 
   it('rejects missing device when syncing', async () => {
-    prismaMock.device.findFirst.mockResolvedValue(null);
+    prismaMock.device.findUnique.mockResolvedValue(null);
 
     await expect(
       service.sync(
