@@ -1,8 +1,9 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { PaymentMethod, PaymentStatus } from '@prisma/client';
 import {
   IsDate,
   IsEnum,
+  IsNotEmpty,
   IsString,
   Matches,
   MaxLength,
@@ -22,7 +23,11 @@ export class UpdatePaymentDto {
   paymentMethod?: PaymentMethod;
 
   @ValidateIf((_, value) => value !== undefined)
+  @Transform(({ value }: { value: unknown }): unknown =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
+  @IsNotEmpty()
   @MaxLength(100)
   reference?: string;
 
