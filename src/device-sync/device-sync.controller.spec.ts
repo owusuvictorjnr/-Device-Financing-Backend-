@@ -1,22 +1,21 @@
 import { ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import { UserRole } from '@prisma/client';
+import { DeviceStatus, UserRole } from '@prisma/client';
 import { Test, TestingModule } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { JwtGuard } from '../common/guards/jwt/jwt.guard';
+import { RolesGuard } from '../common/guards/roles/roles.guard';
 import { DeviceSyncController } from './device-sync.controller';
 import { DeviceSyncService } from './device-sync.service';
+import { SyncDeviceDto } from './dto/sync-device.dto';
 
 describe('DeviceSyncController', () => {
   let controller: DeviceSyncController;
   const deviceSyncServiceMock: {
     sync: jest.MockedFunction<
       (
-        dto: {
-          serialNumber: string;
-          status?: string;
-          lastSeen?: Date;
-        },
+        dto: SyncDeviceDto,
         actor: { id: string; role: UserRole },
       ) => Promise<{ id: string }>
     >;
@@ -32,8 +31,16 @@ describe('DeviceSyncController', () => {
           useValue: deviceSyncServiceMock,
         },
         {
+          provide: JwtGuard,
+          useValue: { canActivate: jest.fn().mockReturnValue(true) },
+        },
+        {
           provide: JwtService,
           useValue: { verify: jest.fn() },
+        },
+        {
+          provide: RolesGuard,
+          useValue: { canActivate: jest.fn().mockReturnValue(true) },
         },
         {
           provide: Reflector,
@@ -55,9 +62,9 @@ describe('DeviceSyncController', () => {
   });
 
   it('forwards sync requests to the service with authenticated actor context', async () => {
-    const dto = {
+    const dto: SyncDeviceDto = {
       serialNumber: 'SN-001',
-      status: 'ACTIVE' as const,
+      status: DeviceStatus.ACTIVE,
     };
     deviceSyncServiceMock.sync.mockResolvedValue({ id: 'device-1' });
 
