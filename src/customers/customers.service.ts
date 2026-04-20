@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
+import { AuthActor } from '../common/types/auth-actor.type';
 import {
   getPrismaUniqueConstraintTarget,
   isPrismaErrorCode,
@@ -16,11 +17,6 @@ import {
   FindAllCustomersQueryDto,
   UpdateCustomerDto,
 } from './dto';
-
-type AuthActor = {
-  id: string;
-  role: UserRole;
-};
 
 type CustomerRecord = {
   id: string;
