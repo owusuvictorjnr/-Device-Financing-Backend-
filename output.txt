@@ -1,0 +1,225 @@
+node_modules/@eslint/plugin-kit/dist/esm/index.d.ts(96,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@eslint/plugin-kit/dist/esm/index.d.ts(252,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@prisma/adapter-pg/dist/index.d.ts(3,8): error TS1192: Module '"/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/pg/index"' has no default export.
+node_modules/@prisma/client-runtime-utils/dist/index.d.ts(4,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@prisma/client-runtime-utils/dist/index.d.ts(10,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@prisma/client-runtime-utils/dist/index.d.ts(325,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@prisma/client-runtime-utils/dist/index.d.ts(355,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+node_modules/@types/eslint-scope/index.d.ts(7,5): error TS2416: Property 'scopes' in type 'ScopeManager' is not assignable to the same property in base type 'ScopeManager'.
+  Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Scope[]' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Scope[]'.
+    Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Scope' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Scope'.
+      Types of property 'type' are incompatible.
+        Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+          Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(8,5): error TS2416: Property 'globalScope' in type 'ScopeManager' is not assignable to the same property in base type 'ScopeManager'.
+  Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Scope' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Scope'.
+    Types of property 'type' are incompatible.
+      Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+        Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(9,5): error TS2416: Property 'acquire' in type 'ScopeManager' is not assignable to the same property in base type 'ScopeManager'.
+  Type '(node: {}, inner?: boolean) => Scope' is not assignable to type '(node: Node, inner?: boolean) => Scope'.
+    Call signature return types 'Scope' and 'Scope' are incompatible.
+      The types of 'type' are incompatible between these types.
+        Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+          Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(10,5): error TS2416: Property 'getDeclaredVariables' in type 'ScopeManager' is not assignable to the same property in base type 'ScopeManager'.
+  Type '(node: {}) => Variable[]' is not assignable to type '(node: Node) => Variable[]'.
+    Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Variable[]' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Variable[]'.
+      Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Variable' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Variable'.
+        The types of 'scope.type' are incompatible between these types.
+          Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+            Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(14,5): error TS2416: Property 'type' in type 'Scope' is not assignable to the same property in base type 'Scope'.
+  Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+    Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(27,5): error TS2416: Property 'upper' in type 'Scope' is not assignable to the same property in base type 'Scope'.
+  Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Scope' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Scope'.
+    Types of property 'type' are incompatible.
+      Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+        Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(28,5): error TS2416: Property 'childScopes' in type 'Scope' is not assignable to the same property in base type 'Scope'.
+  Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Scope[]' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Scope[]'.
+    Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Scope' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Scope'.
+      Types of property 'type' are incompatible.
+        Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+          Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(29,5): error TS2416: Property 'variableScope' in type 'Scope' is not assignable to the same property in base type 'Scope'.
+  Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Scope' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Scope'.
+    Types of property 'type' are incompatible.
+      Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+        Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(31,5): error TS2416: Property 'variables' in type 'Scope' is not assignable to the same property in base type 'Scope'.
+  Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Variable[]' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Variable[]'.
+    Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Variable' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Variable'.
+      The types of 'scope.type' are incompatible between these types.
+        Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+          Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(32,5): error TS2416: Property 'set' in type 'Scope' is not assignable to the same property in base type 'Scope'.
+  Type 'Map<string, import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Variable>' is not assignable to type 'Map<string, import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Variable>'.
+    Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Variable' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Variable'.
+      The types of 'scope.type' are incompatible between these types.
+        Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+          Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(33,5): error TS2416: Property 'references' in type 'Scope' is not assignable to the same property in base type 'Scope'.
+  Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Reference[]' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Reference[]'.
+    Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Reference' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Reference'.
+      The types of 'from.type' are incompatible between these types.
+        Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+          Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(34,5): error TS2416: Property 'through' in type 'Scope' is not assignable to the same property in base type 'Scope'.
+  Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Reference[]' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Reference[]'.
+    Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Reference' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Reference'.
+      The types of 'from.type' are incompatible between these types.
+        Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+          Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(40,5): error TS2416: Property 'scope' in type 'Variable' is not assignable to the same property in base type 'Variable'.
+  Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Scope' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Scope'.
+    Types of property 'type' are incompatible.
+      Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+        Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(42,5): error TS2416: Property 'references' in type 'Variable' is not assignable to the same property in base type 'Variable'.
+  Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Reference[]' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Reference[]'.
+    Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Reference' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Reference'.
+      The types of 'from.type' are incompatible between these types.
+        Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+          Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(48,5): error TS2416: Property 'from' in type 'Reference' is not assignable to the same property in base type 'Reference'.
+  Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Scope' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Scope'.
+    Types of property 'type' are incompatible.
+      Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+        Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(49,5): error TS2416: Property 'resolved' in type 'Reference' is not assignable to the same property in base type 'Reference'.
+  Type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/@types/eslint-scope/index").Variable' is not assignable to type 'import("/home/vitech/Desktop/Projects/device-financing-backend/node_modules/eslint/lib/types/index").Scope.Variable'.
+    The types of 'scope.type' are incompatible between these types.
+      Type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+        Type '"TDZ"' is not assignable to type '"function" | "block" | "module" | "switch" | "global" | "class" | "with" | "catch" | "for" | "function-expression-name" | "class-field-initializer" | "class-static-block"'.
+node_modules/@types/eslint-scope/index.d.ts(50,5): error TS2416: Property 'writeExpr' in type 'Reference' is not assignable to the same property in base type 'Reference'.
+  Type 'Node' is not assignable to type 'Expression'.
+    Type 'AssignmentProperty' is not assignable to type 'Expression'.
+      Property 'bigint' is missing in type 'AssignmentProperty' but required in type 'BigIntLiteral'.
+src/device-sync/dto/sync-device.dto.ts(13,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<SyncDeviceDto, string> & { name: "serialNumber"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/device-sync/dto/sync-device.dto.ts(14,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<SyncDeviceDto, string> & { name: "serialNumber"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/device-sync/dto/sync-device.dto.ts(17,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<SyncDeviceDto, DeviceStatus> & { name: "status"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/device-sync/dto/sync-device.dto.ts(21,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<SyncDeviceDto, DeviceStatus> & { name: "status"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/device-sync/dto/sync-device.dto.ts(22,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<SyncDeviceDto, DeviceStatus> & { name: "status"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/device-sync/dto/sync-device.dto.ts(25,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<SyncDeviceDto, Date> & { name: "lastSeen"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/device-sync/dto/sync-device.dto.ts(30,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<SyncDeviceDto, Date> & { name: "lastSeen"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/device-sync/dto/sync-device.dto.ts(31,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<SyncDeviceDto, Date> & { name: "lastSeen"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/device-sync/dto/sync-device.dto.ts(32,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<SyncDeviceDto, Date> & { name: "lastSeen"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(14,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, string> & { name: "serialNumber"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(15,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, string> & { name: "serialNumber"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(18,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, DeviceType> & { name: "deviceType"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(21,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, DevicePlatform> & { name: "platform"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(24,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, string> & { name: "model"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(25,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, string> & { name: "model"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(28,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, DeviceStatus> & { name: "status"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(29,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, DeviceStatus> & { name: "status"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(30,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, DeviceStatus> & { name: "status"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(36,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, string> & { name: "customerId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(37,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, string> & { name: "customerId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(38,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, string> & { name: "customerId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(44,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, Date> & { name: "lastSeen"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(45,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, Date> & { name: "lastSeen"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(46,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, Date> & { name: "lastSeen"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/create-device.dto.ts(47,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<CreateDeviceDto, Date> & { name: "lastSeen"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(7,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, number> & { name: "skip"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(12,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, number> & { name: "skip"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(13,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, number> & { name: "skip"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(14,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, number> & { name: "skip"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(15,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, number> & { name: "skip"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(18,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, number> & { name: "take"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(24,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, number> & { name: "take"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(25,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, number> & { name: "take"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(26,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, number> & { name: "take"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(27,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, number> & { name: "take"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(28,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, number> & { name: "take"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(31,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, string> & { name: "customerId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(36,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, string> & { name: "customerId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(37,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, string> & { name: "customerId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(40,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, DeviceStatus> & { name: "status"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(45,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, DeviceStatus> & { name: "status"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(46,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, DeviceStatus> & { name: "status"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(49,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, DeviceType> & { name: "deviceType"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(54,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, DeviceType> & { name: "deviceType"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(55,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, DeviceType> & { name: "deviceType"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(58,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, DevicePlatform> & { name: "platform"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(63,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, DevicePlatform> & { name: "platform"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/find-all-devices-query.dto.ts(64,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<FindAllDevicesQueryDto, DevicePlatform> & { name: "platform"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/update-device.dto.ts(6,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<UpdateDeviceDto, string> & { name: "serialNumber"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/update-device.dto.ts(7,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<UpdateDeviceDto, string> & { name: "serialNumber"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/update-device.dto.ts(10,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<UpdateDeviceDto, DeviceType> & { name: "deviceType"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/update-device.dto.ts(11,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<UpdateDeviceDto, DeviceType> & { name: "deviceType"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/update-device.dto.ts(14,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<UpdateDeviceDto, DevicePlatform> & { name: "platform"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/update-device.dto.ts(15,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<UpdateDeviceDto, DevicePlatform> & { name: "platform"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/update-device.dto.ts(18,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<UpdateDeviceDto, string> & { name: "model"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/update-device.dto.ts(19,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<UpdateDeviceDto, string> & { name: "model"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/update-device.dto.ts(22,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<UpdateDeviceDto, DeviceStatus> & { name: "status"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/update-device.dto.ts(23,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<UpdateDeviceDto, DeviceStatus> & { name: "status"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/update-device.dto.ts(26,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<UpdateDeviceDto, string> & { name: "customerId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/update-device.dto.ts(27,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<UpdateDeviceDto, string> & { name: "customerId"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/update-device.dto.ts(30,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<UpdateDeviceDto, Date> & { name: "lastSeen"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/update-device.dto.ts(31,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<UpdateDeviceDto, Date> & { name: "lastSeen"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
+src/devices/dto/update-device.dto.ts(32,4): error TS1240: Unable to resolve signature of property decorator when called as an expression.
+  Argument of type 'ClassFieldDecoratorContext<UpdateDeviceDto, Date> & { name: "lastSeen"; private: false; static: false; }' is not assignable to parameter of type 'string | symbol'.
