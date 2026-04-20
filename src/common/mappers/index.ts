@@ -1,0 +1,1 @@
+export { mapDeviceToResponseDto } from './device-mapper';
