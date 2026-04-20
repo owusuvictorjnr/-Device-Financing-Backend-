@@ -11,14 +11,10 @@ import { CurrentUser } from '../common/decorators/current-user/current-user.deco
 import { Roles } from '../common/decorators/roles/roles.decorator';
 import { JwtGuard } from '../common/guards/jwt/jwt.guard';
 import { RolesGuard } from '../common/guards/roles/roles.guard';
+import { AuthActor } from '../common/types/auth-actor.type';
 import { DeviceResponseDto } from '../devices/dto';
 import { SyncDeviceDto } from './dto/sync-device.dto';
 import { DeviceSyncService } from './device-sync.service';
-
-type AuthActor = {
-  id: string;
-  role: UserRole;
-};
 
 @ApiTags('device-sync')
 @Controller('device-sync')
