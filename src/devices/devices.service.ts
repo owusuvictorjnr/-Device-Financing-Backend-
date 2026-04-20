@@ -20,12 +20,10 @@ import {
   isPrismaErrorCode,
 } from '../common/prisma/prisma-error.utils';
 import { PrismaService } from '../database/prisma.service';
-import {
-  CreateDeviceDto,
-  DeviceResponseDto,
-  FindAllDevicesQueryDto,
-  UpdateDeviceDto,
-} from './dto';
+import { CreateDeviceDto } from './dto/create-device.dto';
+import { DeviceResponseDto } from './dto/device-response.dto';
+import { FindAllDevicesQueryDto } from './dto/find-all-devices-query.dto';
+import { UpdateDeviceDto } from './dto/update-device.dto';
 
 type AuthActor = {
   id: string;
@@ -63,7 +61,7 @@ export class DevicesService {
 
     // For AGENT, validate active agent record exists regardless of customer assignment
     if (actor.role === UserRole.AGENT) {
-      actorAgentId = (await this.getActiveAgentByUserId(actor.id)).id;
+      actorAgentId = (await getActiveAgentByUserId(this.prisma, actor.id)).id;
     }
 
     const customerId = await this.resolveTargetCustomerId(
@@ -139,10 +137,14 @@ export class DevicesService {
         where.customer_id = query.customerId;
       }
     } else if (actor.role === UserRole.AGENT) {
-      const agent = await this.getActiveAgentByUserId(actor.id);
+      const agent = await getActiveAgentByUserId(this.prisma, actor.id);
 
       if (query.customerId) {
-        await this.assertCustomerBelongsToAgent(query.customerId, agent.id);
+        await assertCustomerBelongsToAgent(
+          this.prisma,
+          query.customerId,
+          agent.id,
+        );
         where.customer_id = query.customerId;
       } else {
         // Show devices either unassigned or assigned to agent's customers
@@ -275,12 +277,6 @@ export class DevicesService {
     return device;
   }
 
-  private async getActiveAgentByUserId(
-    userId: string,
-  ): Promise<{ id: string }> {
-    return getActiveAgentByUserId(this.prisma, userId);
-  }
-
   private async getActiveCustomerByUserId(
     userId: string,
   ): Promise<{ id: string }> {
@@ -301,12 +297,6 @@ export class DevicesService {
     return customer;
   }
 
-  private async getActiveCustomerById(
-    customerId: string,
-  ): Promise<{ id: string; agent_id: string }> {
-    return getActiveCustomerById(this.prisma, customerId);
-  }
-
   private async resolveTargetCustomerId(
     actor: AuthActor,
     requestedCustomerId: string | null | undefined,
@@ -321,7 +311,10 @@ export class DevicesService {
       return undefined;
     }
 
-    const customer = await this.getActiveCustomerById(requestedCustomerId);
+    const customer = await getActiveCustomerById(
+      this.prisma,
+      requestedCustomerId,
+    );
 
     if (actor.role === UserRole.ADMIN) {
       return customer.id;
@@ -329,7 +322,8 @@ export class DevicesService {
 
     if (actor.role === UserRole.AGENT) {
       const resolvedAgentId =
-        actorAgentId ?? (await this.getActiveAgentByUserId(actor.id)).id;
+        actorAgentId ??
+        (await getActiveAgentByUserId(this.prisma, actor.id)).id;
 
       if (customer.agent_id !== resolvedAgentId) {
         throw new ForbiddenException(
@@ -343,13 +337,6 @@ export class DevicesService {
     throw new ForbiddenException('Customers cannot assign devices');
   }
 
-  private async assertCustomerBelongsToAgent(
-    customerId: string,
-    agentId: string,
-  ): Promise<void> {
-    await assertCustomerBelongsToAgent(this.prisma, customerId, agentId);
-  }
-
   private async assertDeviceAccess(
     device: DeviceRecord,
     actor: AuthActor,
@@ -359,11 +346,15 @@ export class DevicesService {
     }
 
     if (actor.role === UserRole.AGENT) {
-      const agent = await this.getActiveAgentByUserId(actor.id);
+      const agent = await getActiveAgentByUserId(this.prisma, actor.id);
 
       // Allow access to unassigned devices (inventory) or assigned to agent's customers
       if (device.customer_id) {
-        await this.assertCustomerBelongsToAgent(device.customer_id, agent.id);
+        await assertCustomerBelongsToAgent(
+          this.prisma,
+          device.customer_id,
+          agent.id,
+        );
       }
       return;
     }
@@ -375,19 +366,7 @@ export class DevicesService {
     }
   }
 
-  private mapDeviceToResponseDto(device: {
-    id: string;
-    serial_number: string;
-    device_type: DeviceType;
-    platform: DevicePlatform;
-    model: string;
-    status: DeviceStatus;
-    customer_id: string | null;
-    last_seen: Date | null;
-    created_at: Date;
-    updated_at: Date;
-    deleted_at: Date | null;
-  }): DeviceResponseDto {
+  private mapDeviceToResponseDto(device: DeviceRecord): DeviceResponseDto {
     return {
       id: device.id,
       serialNumber: device.serial_number,
