@@ -7,6 +7,7 @@ import {
   assertCustomerBelongsToAgent,
   getActiveAgentByUserId,
 } from '../common/access/device-portfolio-access.utils';
+import { mapDeviceToResponseDto } from '../common/mappers';
 import {
   DevicePlatform,
   DeviceStatus,
@@ -110,7 +111,7 @@ export class DeviceSyncService {
       );
     }
 
-    return this.mapDeviceToResponseDto(updated);
+    return mapDeviceToResponseDto(updated);
   }
 
   private async assertDeviceSyncAccess(
@@ -138,21 +139,5 @@ export class DeviceSyncService {
     }
 
     throw new ForbiddenException('Customers cannot sync devices');
-  }
-
-  private mapDeviceToResponseDto(device: DeviceSyncRecord): DeviceResponseDto {
-    return {
-      id: device.id,
-      serialNumber: device.serial_number,
-      deviceType: device.device_type,
-      platform: device.platform,
-      model: device.model,
-      status: device.status,
-      customerId: device.customer_id,
-      lastSeen: device.last_seen,
-      createdAt: device.created_at,
-      updatedAt: device.updated_at,
-      deletedAt: device.deleted_at,
-    };
   }
 }
