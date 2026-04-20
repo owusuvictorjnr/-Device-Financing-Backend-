@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
+import { getActiveAgentByUserId } from '../common/access/device-portfolio-access.utils';
 import { AuthActor } from '../common/types/auth-actor.type';
 import {
   getPrismaUniqueConstraintTarget,
@@ -76,7 +77,7 @@ export class CustomersService {
     };
 
     if (actor.role === UserRole.AGENT) {
-      const agent = await this.getActiveAgentByUserId(actor.id);
+      const agent = await getActiveAgentByUserId(this.prisma, actor.id);
       where.agent_id = agent.id;
     } else if (query.agentId) {
       where.agent_id = query.agentId;
@@ -185,30 +186,12 @@ export class CustomersService {
     return customer;
   }
 
-  private async getActiveAgentByUserId(
-    userId: string,
-  ): Promise<{ id: string }> {
-    const agent = await this.prisma.agent.findFirst({
-      where: {
-        user_id: userId,
-        deleted_at: null,
-      },
-      select: { id: true },
-    });
-
-    if (!agent) {
-      throw new ForbiddenException('Authenticated user is not an active agent');
-    }
-
-    return agent;
-  }
-
   private async resolveTargetAgentId(
     actor: AuthActor,
     requestedAgentId: string | undefined,
   ): Promise<string> {
     if (actor.role === UserRole.AGENT) {
-      const agent = await this.getActiveAgentByUserId(actor.id);
+      const agent = await getActiveAgentByUserId(this.prisma, actor.id);
 
       if (requestedAgentId && requestedAgentId !== agent.id) {
         throw new ForbiddenException(
@@ -234,7 +217,7 @@ export class CustomersService {
       return;
     }
 
-    const agent = await this.getActiveAgentByUserId(actor.id);
+    const agent = await getActiveAgentByUserId(this.prisma, actor.id);
 
     if (customer.agent_id !== agent.id) {
       throw new ForbiddenException(
