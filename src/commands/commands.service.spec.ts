@@ -151,6 +151,62 @@ describe('CommandsService', () => {
     );
   });
 
+  it('returns issued-by specific message for P2003 create errors', async () => {
+    prismaMock.loan.findFirst.mockResolvedValue({
+      id: 'loan-1',
+      customer_id: 'customer-1',
+      agent_id: 'agent-user-1',
+      device_id: 'device-1',
+    });
+    prismaMock.device.findFirst.mockResolvedValue({ id: 'device-1' });
+    prismaMock.command.create.mockRejectedValue({
+      code: 'P2003',
+      meta: { field_name: 'issued_by_id' },
+    });
+
+    await expect(
+      service.create(
+        {
+          deviceId: 'device-1',
+          loanId: 'loan-1',
+          commandType: CommandType.LOCK,
+        },
+        {
+          id: 'admin-1',
+          role: UserRole.ADMIN,
+        },
+      ),
+    ).rejects.toThrow('Referenced issuing user does not exist');
+  });
+
+  it('returns generic related-record message for unknown P2003 fields', async () => {
+    prismaMock.loan.findFirst.mockResolvedValue({
+      id: 'loan-1',
+      customer_id: 'customer-1',
+      agent_id: 'agent-user-1',
+      device_id: 'device-1',
+    });
+    prismaMock.device.findFirst.mockResolvedValue({ id: 'device-1' });
+    prismaMock.command.create.mockRejectedValue({
+      code: 'P2003',
+      meta: { field_name: 'unknown_fk' },
+    });
+
+    await expect(
+      service.create(
+        {
+          deviceId: 'device-1',
+          loanId: 'loan-1',
+          commandType: CommandType.LOCK,
+        },
+        {
+          id: 'admin-1',
+          role: UserRole.ADMIN,
+        },
+      ),
+    ).rejects.toThrow('A related record does not exist');
+  });
+
   it('findAll for ADMIN always filters out commands with deleted loans', async () => {
     prismaMock.command.findMany.mockResolvedValue([]);
 
