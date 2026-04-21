@@ -450,6 +450,50 @@ export class CommandsService {
       return;
     }
 
-    throw new BadRequestException('Referenced loan or device does not exist');
+    const foreignKeyField = this.getForeignKeyFieldName(error);
+
+    if (foreignKeyField?.includes('loan_id')) {
+      throw new BadRequestException('Referenced loan does not exist');
+    }
+
+    if (foreignKeyField?.includes('device_id')) {
+      throw new BadRequestException('Referenced device does not exist');
+    }
+
+    if (foreignKeyField?.includes('issued_by_id')) {
+      throw new BadRequestException('Referenced issuing user does not exist');
+    }
+
+    throw new BadRequestException('A related record does not exist');
+  }
+
+  private getForeignKeyFieldName(error: unknown): string | null {
+    if (!error || typeof error !== 'object') {
+      return null;
+    }
+
+    const meta = (error as { meta?: unknown }).meta;
+    if (!meta || typeof meta !== 'object') {
+      return null;
+    }
+
+    const fieldName = (meta as { field_name?: unknown }).field_name;
+    if (typeof fieldName === 'string') {
+      return fieldName;
+    }
+
+    const target = (meta as { target?: unknown }).target;
+    if (Array.isArray(target)) {
+      const stringTarget = target.find(
+        (value): value is string => typeof value === 'string',
+      );
+      return stringTarget ?? null;
+    }
+
+    if (typeof target === 'string') {
+      return target;
+    }
+
+    return null;
   }
 }
