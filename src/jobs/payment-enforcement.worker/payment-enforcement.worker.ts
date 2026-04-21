@@ -5,6 +5,8 @@ import { PrismaService } from '../../database/prisma.service';
 @Injectable()
 export class PaymentEnforcementWorker {
   private readonly logger = new Logger(PaymentEnforcementWorker.name);
+  // Keep in sync with CommandRetryWorker default maxRetries.
+  private readonly retryableFailedCommandMaxRetries = 5;
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -45,13 +47,21 @@ export class PaymentEnforcementWorker {
         deleted_at: null,
         loan_id: { in: loanIds },
         command_type: CommandType.LOCK,
-        status: {
-          in: [
-            CommandStatus.PENDING,
-            CommandStatus.SENT,
-            CommandStatus.ACKNOWLEDGED,
-          ],
-        },
+        OR: [
+          {
+            status: {
+              in: [
+                CommandStatus.PENDING,
+                CommandStatus.SENT,
+                CommandStatus.ACKNOWLEDGED,
+              ],
+            },
+          },
+          {
+            status: CommandStatus.FAILED,
+            retry_count: { lt: this.retryableFailedCommandMaxRetries },
+          },
+        ],
       },
       select: {
         loan_id: true,
