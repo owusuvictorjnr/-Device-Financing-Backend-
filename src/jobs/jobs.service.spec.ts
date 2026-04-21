@@ -113,4 +113,24 @@ describe('JobsService', () => {
     expect(result.dueSoonReminders).toBe(1);
     expect(result.executedAt).toBeInstanceOf(Date);
   });
+
+  it('runAll keeps successful results when one job fails', async () => {
+    paymentWorkerMock.enforceOverdueLoans.mockRejectedValue(
+      new Error('payment failure'),
+    );
+    commandRetryWorkerMock.retryFailedCommands.mockResolvedValue(3);
+    reminderWorkerMock.getDueSoonLoans.mockResolvedValue([
+      { id: 'loan-1', customerId: 'customer-1', dueDate: new Date() },
+      { id: 'loan-2', customerId: 'customer-2', dueDate: new Date() },
+    ]);
+
+    const result = await service.runAll();
+
+    expect(result.createdLockCommands).toBe(0);
+    expect(result.requeuedCommands).toBe(3);
+    expect(result.dueSoonReminders).toBe(2);
+    expect(result.failures).toEqual(
+      expect.objectContaining({ paymentEnforcement: 'payment failure' }),
+    );
+  });
 });
