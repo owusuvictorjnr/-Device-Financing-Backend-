@@ -70,6 +70,7 @@ describe('CommandRetryWorker', () => {
         status: CommandStatus.PENDING,
         retry_count: { increment: 1 },
         sent_at: null,
+        acknowledged_at: null,
       },
     });
     expect(result).toBe(2);
