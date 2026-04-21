@@ -85,13 +85,21 @@ describe('PaymentEnforcementWorker', () => {
         where: expect.objectContaining({
           loan_id: { in: ['loan-1', 'loan-2'] },
           command_type: CommandType.LOCK,
-          status: {
-            in: [
-              CommandStatus.PENDING,
-              CommandStatus.SENT,
-              CommandStatus.ACKNOWLEDGED,
-            ],
-          },
+          OR: [
+            {
+              status: {
+                in: [
+                  CommandStatus.PENDING,
+                  CommandStatus.SENT,
+                  CommandStatus.ACKNOWLEDGED,
+                ],
+              },
+            },
+            {
+              status: CommandStatus.FAILED,
+              retry_count: { lt: 5 },
+            },
+          ],
         }),
       }),
     );
