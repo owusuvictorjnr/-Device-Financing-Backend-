@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { LoanStatus } from '@prisma/client';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import { PrismaService } from '../../database/prisma.service';
+
+dayjs.extend(utc);
 
 type ReminderCandidate = {
   id: string;
@@ -17,7 +20,7 @@ export class ReminderWorker {
     daysAhead = 1,
     batchSize = 100,
   ): Promise<ReminderCandidate[]> {
-    const now = dayjs();
+    const now = dayjs.utc();
     const dueUntil = now.add(daysAhead, 'day').endOf('day');
 
     const loans = await this.prisma.loan.findMany({
