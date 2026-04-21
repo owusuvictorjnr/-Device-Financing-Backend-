@@ -6,10 +6,7 @@ import {
 } from '@nestjs/common';
 import { CommandStatus, CommandType, Prisma, UserRole } from '@prisma/client';
 import type { AuthActor } from '../common/types/auth-actor.type';
-import {
-  getPrismaUniqueConstraintTarget,
-  isPrismaErrorCode,
-} from '../common/prisma/prisma-error.utils';
+import { isPrismaErrorCode } from '../common/prisma/prisma-error.utils';
 import { PrismaService } from '../database/prisma.service';
 import {
   CommandResponseDto,
@@ -109,12 +106,10 @@ export class CommandsService {
     }
 
     if (actor.role === UserRole.ADMIN) {
-      if (query.customerId) {
-        where.loan = {
-          deleted_at: null,
-          customer_id: query.customerId,
-        };
-      }
+      where.loan = {
+        deleted_at: null,
+        ...(query.customerId ? { customer_id: query.customerId } : {}),
+      };
     } else if (actor.role === UserRole.AGENT) {
       const agentProfile = await this.getActiveAgentProfileByUserId(actor.id);
 
@@ -456,16 +451,5 @@ export class CommandsService {
     }
 
     throw new BadRequestException('Referenced loan or device does not exist');
-  }
-
-  private handleUniqueConstraintError(error: unknown): void {
-    if (!isPrismaErrorCode(error, 'P2002')) {
-      return;
-    }
-
-    const target = getPrismaUniqueConstraintTarget(error);
-    throw new BadRequestException(
-      `Command already exists for unique fields: ${target.join(', ')}`,
-    );
   }
 }
