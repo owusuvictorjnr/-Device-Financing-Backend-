@@ -8,6 +8,11 @@ export type JobsRunSummary = {
   createdLockCommands: number;
   requeuedCommands: number;
   dueSoonReminders: number;
+  failures?: {
+    paymentEnforcement?: string;
+    commandRetry?: string;
+    reminders?: string;
+  };
 };
 
 @Injectable()
@@ -39,18 +44,46 @@ export class JobsService {
   }
 
   async runAll(): Promise<JobsRunSummary> {
-    const [createdLockCommands, requeuedCommands, dueSoonReminders] =
-      await Promise.all([
+    const [paymentEnforcement, commandRetry, reminders] =
+      await Promise.allSettled([
         this.runPaymentEnforcement(),
         this.runCommandRetry(),
         this.runReminders(),
       ]);
+
+    const failures: NonNullable<JobsRunSummary['failures']> = {};
+    const createdLockCommands =
+      paymentEnforcement.status === 'fulfilled' ? paymentEnforcement.value : 0;
+    const requeuedCommands =
+      commandRetry.status === 'fulfilled' ? commandRetry.value : 0;
+    const dueSoonReminders =
+      reminders.status === 'fulfilled' ? reminders.value : 0;
+
+    if (paymentEnforcement.status === 'rejected') {
+      failures.paymentEnforcement = this.getErrorMessage(
+        paymentEnforcement.reason,
+      );
+      this.logger.error(
+        `Payment enforcement job failed: ${failures.paymentEnforcement}`,
+      );
+    }
+
+    if (commandRetry.status === 'rejected') {
+      failures.commandRetry = this.getErrorMessage(commandRetry.reason);
+      this.logger.error(`Command retry job failed: ${failures.commandRetry}`);
+    }
+
+    if (reminders.status === 'rejected') {
+      failures.reminders = this.getErrorMessage(reminders.reason);
+      this.logger.error(`Reminder job failed: ${failures.reminders}`);
+    }
 
     const summary: JobsRunSummary = {
       executedAt: new Date(),
       createdLockCommands,
       requeuedCommands,
       dueSoonReminders,
+      ...(Object.keys(failures).length > 0 ? { failures } : {}),
     };
 
     this.logger.log(
@@ -58,5 +91,17 @@ export class JobsService {
     );
 
     return summary;
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    if (typeof error === 'string') {
+      return error;
+    }
+
+    return 'Unknown error';
   }
 }
