@@ -1,8 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LoanStatus } from '@prisma/client';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import { PrismaService } from '../../database/prisma.service';
 import { ReminderWorker } from './reminder.worker';
+
+dayjs.extend(utc);
 
 describe('ReminderWorker', () => {
   let worker: ReminderWorker;
@@ -67,5 +71,30 @@ describe('ReminderWorker', () => {
         dueDate,
       },
     ]);
+  });
+
+  it('uses UTC time window boundaries for due-soon lookup', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-04-21T10:30:00.000Z'));
+    prismaMock.loan.findMany.mockResolvedValue([]);
+
+    await worker.getDueSoonLoans(1, 100);
+
+    expect(prismaMock.loan.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          due_date: {
+            gte: dayjs.utc('2026-04-21T10:30:00.000Z').toDate(),
+            lte: dayjs
+              .utc('2026-04-21T10:30:00.000Z')
+              .add(1, 'day')
+              .endOf('day')
+              .toDate(),
+          },
+        }),
+      }),
+    );
+
+    jest.useRealTimers();
   });
 });
